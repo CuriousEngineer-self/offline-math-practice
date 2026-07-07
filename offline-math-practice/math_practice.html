@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ganita Abhyasa — Math Practice</title>
+<style>
+  /* ============================================================
+     CHALKBOARD THEME
+     ============================================================ */
+  :root{
+    --board:#1f4237;          /* chalkboard green */
+    --board-dark:#173428;
+    --frame:#8a5a33;          /* wooden frame */
+    --frame-dark:#6e4523;
+    --chalk:#f6f3e8;          /* chalk white */
+    --chalk-dim:#cfd8cd;
+    --chalk-yellow:#ffd95e;
+    --chalk-pink:#ff9d9d;
+    --chalk-blue:#9dd6ff;
+    --correct:#7fe08a;
+    --wrong:#ff8a7a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--frame);
+    background-image:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.07) 0 2px, transparent 2px 90px),
+      linear-gradient(var(--frame), var(--frame-dark));
+    font-family:'Comic Sans MS','Chalkboard SE','Segoe Print',sans-serif;
+    color:var(--chalk);
+    display:flex;align-items:center;justify-content:center;
+    padding:18px;
+  }
+  .board{
+    width:100%;max-width:760px;
+    background:var(--board);
+    background-image:radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.05), transparent 60%),
+                     radial-gradient(ellipse at 80% 80%, rgba(0,0,0,.15), transparent 60%);
+    border:14px solid var(--frame-dark);
+    border-radius:14px;
+    box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 0 60px rgba(0,0,0,.35);
+    padding:28px 30px 26px;
+  }
+  h1{
+    text-align:center;font-size:2rem;letter-spacing:1px;
+    color:var(--chalk-yellow);text-shadow:0 0 6px rgba(255,217,94,.35);
+    margin-bottom:4px;
+  }
+  .subtitle{text-align:center;color:var(--chalk-dim);margin-bottom:22px;font-size:.95rem}
+  .screen{display:none}
+  .screen.active{display:block;animation:fadein .3s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  label{display:block;margin:14px 0 6px;color:var(--chalk-blue)}
+  input[type=text],input[type=number]{
+    width:100%;padding:12px 14px;font:inherit;font-size:1.2rem;
+    background:rgba(255,255,255,.08);border:2px dashed var(--chalk-dim);
+    border-radius:10px;color:var(--chalk);outline:none;
+  }
+  input:focus{border-color:var(--chalk-yellow)}
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:140px}
+
+  button{
+    font:inherit;cursor:pointer;border:none;border-radius:12px;
+    padding:14px 18px;font-size:1.15rem;color:var(--board-dark);
+    background:var(--chalk-yellow);
+    box-shadow:0 4px 0 rgba(0,0,0,.3);
+    transition:transform .08s ease;
+  }
+  button:hover{transform:translateY(-2px)}
+  button:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+  button:focus-visible{outline:3px solid var(--chalk-blue);outline-offset:2px}
+  .btn-big{width:100%;margin-top:20px}
+  .btn-quiet{background:transparent;color:var(--chalk-dim);border:2px dashed var(--chalk-dim);box-shadow:none;font-size:.95rem;padding:8px 14px}
+
+  /* operation menu */
+  .ops{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  .op-btn{
+    padding:26px 10px;font-size:1.3rem;border-radius:14px;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .op-btn .sym{font-size:2.4rem;line-height:1}
+  .op-add{background:var(--chalk-yellow)}
+  .op-sub{background:var(--chalk-pink)}
+  .op-mul{background:var(--chalk-blue)}
+  .op-div{background:var(--correct)}
+  .op-level{font-size:.8rem;opacity:.75}
+
+  /* practice screen */
+  .statusbar{
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+    font-size:.95rem;color:var(--chalk-dim);
+    border-bottom:2px dashed rgba(255,255,255,.2);padding-bottom:10px;margin-bottom:14px;
+  }
+  .statusbar b{color:var(--chalk-yellow)}
+  .problem{
+    text-align:center;margin:10px auto 6px;
+    font-size:3rem;letter-spacing:6px;line-height:1.25;
+    white-space:pre;font-variant-numeric:tabular-nums;
+  }
+  .problem .opline{color:var(--chalk-pink)}
+  .problem .rule{border-top:4px solid var(--chalk);margin:6px auto 0;width:fit-content;padding:0 8px}
+  .answer-row{display:flex;gap:12px;max-width:420px;margin:16px auto 0}
+  .answer-row input{font-size:1.8rem;text-align:center}
+  .answer-row button{white-space:nowrap}
+
+  /* timer */
+  .timer-wrap{height:16px;background:rgba(255,255,255,.12);border-radius:8px;overflow:hidden;margin-top:20px}
+  .timer-bar{height:100%;width:100%;background:var(--correct);transition:width .25s linear}
+  .timer-bar.hurry{background:var(--wrong)}
+  .timer-label{text-align:center;font-size:.9rem;color:var(--chalk-dim);margin-top:6px}
+
+  .feedback{
+    text-align:center;min-height:2.4rem;margin-top:14px;font-size:1.4rem;
+  }
+  .feedback.ok{color:var(--correct)}
+  .feedback.bad{color:var(--wrong)}
+  .stars{text-align:center;font-size:1.2rem;letter-spacing:4px;color:var(--chalk-yellow);min-height:1.5rem}
+
+  .foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:24px}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.9rem}
+  th,td{border:1px dashed rgba(255,255,255,.25);padding:6px 8px;text-align:center}
+  th{color:var(--chalk-yellow)}
+  .note{font-size:.8rem;color:var(--chalk-dim);margin-top:10px;text-align:center}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:520px){
+    .problem{font-size:2.2rem}
+    .ops{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="board">
+  <h1>&#10024; Ganita Abhyasa &#10024;</h1>
+  <div class="subtitle">Math practice board</div>
+
+  <!-- ================= SCREEN 1 : NAME + SETTINGS ================= -->
+  <div class="screen active" id="scr-name">
+    <label for="inp-name">What is your name?</label>
+    <input type="text" id="inp-name" placeholder="Type your name here" autocomplete="off">
+    <div class="row">
+      <div>
+        <label for="inp-timer">Seconds per question (teacher setting)</label>
+        <input type="number" id="inp-timer" value="30" min="5" max="300">
+      </div>
+      <div>
+        <label for="inp-qs">Questions per round</label>
+        <input type="number" id="inp-qs" value="10" min="3" max="50">
+      </div>
+    </div>
+    <button class="btn-big" id="btn-start">Start &#9989;</button>
+    <div class="note">Progress is saved on this computer. Use "Download score sheet (CSV)" to collect results.</div>
+  </div>
+
+  <!-- ================= SCREEN 2 : OPERATION MENU ================= -->
+  <div class="screen" id="scr-menu">
+    <div class="subtitle" id="menu-hello"></div>
+    <div class="ops">
+      <button class="op-btn op-add" data-op="add"><span class="sym">+</span>Addition<span class="op-level" id="lv-add"></span></button>
+      <button class="op-btn op-sub" data-op="sub"><span class="sym">&minus;</span>Subtraction<span class="op-level" id="lv-sub"></span></button>
+      <button class="op-btn op-mul" data-op="mul"><span class="sym">&times;</span>Multiplication<span class="op-level" id="lv-mul"></span></button>
+      <button class="op-btn op-div" data-op="div"><span class="sym">&divide;</span>Division<span class="op-level" id="lv-div"></span></button>
+    </div>
+    <div class="foot">
+      <button class="btn-quiet" id="btn-scores">View scores</button>
+      <button class="btn-quiet" id="btn-csv">Download score sheet (CSV)</button>
+      <button class="btn-quiet" id="btn-switch">Change student</button>
+    </div>
+  </div>
+
+  <!-- ================= SCREEN 3 : PRACTICE ================= -->
+  <div class="screen" id="scr-play">
+    <div class="statusbar">
+      <span id="st-student"></span>
+      <span>Level <b id="st-level"></b> &nbsp; Question <b id="st-qnum"></b></span>
+      <span>Score <b id="st-score"></b></span>
+    </div>
+    <div class="problem" id="problem"></div>
+    <div class="answer-row">
+      <input type="number" id="inp-answer" placeholder="?" autocomplete="off">
+      <button id="btn-submit">Check &#9997;</button>
+    </div>
+    <div class="timer-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+    <div class="timer-label" id="timer-label"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="stars" id="stars"></div>
+    <div class="foot">
+      <button class="btn-quiet" id="btn-stop">Back to menu</button>
+    </div>
+  </div>
+
+  <!-- ================= SCREEN 4 : ROUND SUMMARY / SCORES ================= -->
+  <div class="screen" id="scr-scores">
+    <div class="subtitle" id="scores-title">Score board</div>
+    <div id="scores-body"></div>
+    <div class="foot">
+      <button class="btn-big" id="btn-again">Back to menu &#127968;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   TEACHER CONFIGURATION — edit these values freely
+   ===================================================================== */
+const CONFIG = {
+  defaultTimerSeconds : 30,   // default time per question (also editable on start screen)
+  questionsPerRound   : 10,   // default questions per round (also editable on start screen)
+  levelUpStreak       : 3,    // this many correct answers in a row -> level up
+  levelDownStreak     : 2,    // this many wrong answers in a row  -> level down
+  maxLevel            : 5,    // level N means numbers with N digits (max 5-digit)
+  minLevel            : 1,
+  speakLanguage       : 'en-IN' // preferred TTS voice language; falls back to any English
+};
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+let student = '';
+let timerSeconds = CONFIG.defaultTimerSeconds;
+let questionsPerRound = CONFIG.questionsPerRound;
+
+let session = null;   // current round: {op, qnum, score, correctStreak, wrongStreak}
+let current = null;   // current problem: {a, b, op, answer, display, startedAt}
+let timerId = null, timeLeft = 0, pendingNext = null;
+
+const OPS = {
+  add:{name:'Addition',      sym:'+'},
+  sub:{name:'Subtraction',   sym:'\u2212'},
+  mul:{name:'Multiplication',sym:'\u00D7'},
+  div:{name:'Division',      sym:'\u00F7'}
+};
+
+/* =====================================================================
+   PERSISTENCE (localStorage)
+   - progress: per-student, per-operation level
+   - records : one row per attempted question (exported as CSV)
+   ===================================================================== */
+function loadJSON(key, fallback){
+  try{ return JSON.parse(localStorage.getItem(key)) || fallback; }catch(e){ return fallback; }
+}
+function saveJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+function getLevel(name, op){
+  const p = loadJSON('mp_progress', {});
+  return (p[name] && p[name][op]) || CONFIG.minLevel;
+}
+function setLevel(name, op, level){
+  const p = loadJSON('mp_progress', {});
+  if(!p[name]) p[name] = {};
+  p[name][op] = level;
+  saveJSON('mp_progress', p);
+}
+function addRecord(rec){
+  const r = loadJSON('mp_records', []);
+  r.push(rec);
+  saveJSON('mp_records', r);
+}
+
+/* CSV download — browsers cannot silently write files to disk,
+   so the score sheet is downloaded on demand as a .csv file. */
+function downloadCSV(){
+  const rows = loadJSON('mp_records', []);
+  if(rows.length === 0){ alert('No scores recorded yet.'); return; }
+  const header = ['DateTime','Student','Operation','Level','Problem','StudentAnswer','CorrectAnswer','Result','TimeTakenSec'];
+  const esc = v => '"' + String(v).replace(/"/g,'""') + '"';
+  const csv = [header.join(',')]
+    .concat(rows.map(r => [r.time,r.student,r.op,r.level,r.problem,r.given,r.answer,r.result,r.seconds].map(esc).join(',')))
+    .join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'math_practice_scores.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* =====================================================================
+   SOUND (Web Audio API — no external files needed)
+   ===================================================================== */
+let audioCtx = null;
+function ctx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq, start, dur, type, vol){
+  const c = ctx();
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, c.currentTime + start);
+  g.gain.linearRampToValueAtTime(vol, c.currentTime + start + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + start + dur);
+  o.connect(g).connect(c.destination);
+  o.start(c.currentTime + start);
+  o.stop(c.currentTime + start + dur + 0.05);
+}
+function playCelebration(){           /* happy ascending arpeggio */
+  [523.25, 659.25, 783.99, 1046.5].forEach((f,i)=> tone(f, i*0.13, 0.35, 'triangle', 0.25));
+  tone(1318.5, 0.55, 0.5, 'triangle', 0.2);
+}
+function playBuzzer(){                /* two low buzzes */
+  tone(160, 0,    0.25, 'sawtooth', 0.22);
+  tone(120, 0.28, 0.35, 'sawtooth', 0.22);
+}
+
+/* =====================================================================
+   TEXT-TO-SPEECH (Web Speech API)
+   ===================================================================== */
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  const voices = speechSynthesis.getVoices();
+  u.voice = voices.find(v => v.lang === CONFIG.speakLanguage)
+         || voices.find(v => v.lang && v.lang.startsWith('en'))
+         || null;
+  u.rate = 0.95;
+  speechSynthesis.speak(u);
+}
+// Some browsers load voices asynchronously:
+if('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => {};
+
+/* =====================================================================
+   PROBLEM GENERATION
+   Level N  =>  operands around N digits.
+   - Subtraction: result never negative.
+   - Division  : always exact (no remainder), built from quotient x divisor.
+   - Multiplication/Division: the second number is kept small (1–2 digits)
+     so that a 5th grader can realistically solve it.
+   ===================================================================== */
+function randNDigits(n){
+  const min = n === 1 ? 1 : Math.pow(10, n-1);
+  const max = Math.pow(10, n) - 1;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function makeProblem(op, level){
+  let a, b, answer;
+  switch(op){
+    case 'add':
+      a = randNDigits(level); b = randNDigits(level);
+      answer = a + b; break;
+    case 'sub':
+      a = randNDigits(level); b = randNDigits(level);
+      if(b > a) [a, b] = [b, a];          // keep result non-negative
+      answer = a - b; break;
+    case 'mul':
+      a = randNDigits(level);
+      b = randNDigits(Math.min(level, 2)); // keep multiplier small
+      answer = a * b; break;
+    case 'div':
+      b = randNDigits(Math.min(level, 2)); // divisor
+      if(b === 0) b = 2;
+      answer = randNDigits(level);          // quotient
+      a = answer * b;                       // dividend => exact division
+      break;
+  }
+  return {a, b, op, answer};
+}
+
+/* Blackboard-style vertical layout for + − ×, horizontal for ÷ */
+function renderProblem(p){
+  const el = document.getElementById('problem');
+  if(p.op === 'div'){
+    el.innerHTML = `<div>${p.a} <span class="opline">\u00F7</span> ${p.b} = ?</div>`;
+    return;
+  }
+  const w = Math.max(String(p.a).length, String(p.b).length) + 2;
+  const line1 = String(p.a).padStart(w, '\u00A0');
+  const line2 = OPS[p.op].sym + ' ' + String(p.b).padStart(w - 2, '\u00A0');
+  el.innerHTML = `<div>${line1}</div><div class="opline">${line2}</div><div class="rule">?</div>`;
+}
+
+/* =====================================================================
+   GAME FLOW
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+function show(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+function startSession(op){
+  session = {op, qnum:0, score:0, correctStreak:0, wrongStreak:0,
+             level:getLevel(student, op)};
+  show('scr-play');
+  nextQuestion();
+}
+
+function nextQuestion(){
+  if(session.qnum >= questionsPerRound){ endRound(); return; }
+  session.qnum++;
+  current = makeProblem(session.op, session.level);
+  current.startedAt = Date.now();
+  renderProblem(current);
+  $('st-student').textContent = student;
+  $('st-level').textContent = session.level;
+  $('st-qnum').textContent = session.qnum + ' / ' + questionsPerRound;
+  $('st-score').textContent = session.score;
+  $('feedback').textContent = '';
+  $('feedback').className = 'feedback';
+  $('stars').textContent = '\u2B50'.repeat(session.correctStreak);
+  const inp = $('inp-answer');
+  inp.value = ''; inp.disabled = false; inp.focus();
+  $('btn-submit').disabled = false;
+  startTimer();
+}
+
+function startTimer(){
+  stopTimer();
+  timeLeft = timerSeconds;
+  updateTimerUI();
+  timerId = setInterval(() => {
+    timeLeft--;
+    updateTimerUI();
+    if(timeLeft <= 0){ stopTimer(); evaluate(null, true); }
+  }, 1000);
+}
+function stopTimer(){ if(timerId){ clearInterval(timerId); timerId = null; } }
+function updateTimerUI(){
+  const pct = Math.max(0, timeLeft / timerSeconds * 100);
+  const bar = $('timer-bar');
+  bar.style.width = pct + '%';
+  bar.className = 'timer-bar' + (pct < 30 ? ' hurry' : '');
+  $('timer-label').textContent = timeLeft + ' seconds left';
+}
+
+function evaluate(givenRaw, timedOut){
+  stopTimer();
+  $('inp-answer').disabled = true;
+  $('btn-submit').disabled = true;
+
+  const given = timedOut ? '' : givenRaw;
+  const correct = !timedOut && Number(given) === current.answer;
+  const secs = Math.round((Date.now() - current.startedAt) / 1000);
+  const problemText = current.op === 'div'
+      ? `${current.a} \u00F7 ${current.b}`
+      : `${current.a} ${OPS[current.op].sym} ${current.b}`;
+
+  // ---- record the attempt ----
+  addRecord({
+    time: new Date().toLocaleString(),
+    student, op: OPS[current.op].name, level: session.level,
+    problem: problemText, given: timedOut ? 'TIMED OUT' : given,
+    answer: current.answer,
+    result: correct ? 'Correct' : 'Incorrect',
+    seconds: secs
+  });
+
+  const fb = $('feedback');
+  if(correct){
+    session.score++;
+    session.correctStreak++; session.wrongStreak = 0;
+    fb.textContent = '\u2714 Correct! Well done!';
+    fb.className = 'feedback ok';
+    playCelebration();
+    speak(`${student}, this is correct! Well done!`);
+    // ---- adaptive level up ----
+    if(session.correctStreak >= CONFIG.levelUpStreak && session.level < CONFIG.maxLevel){
+      session.level++;
+      session.correctStreak = 0;
+      setLevel(student, session.op, session.level);
+      fb.textContent += `  \u2B06 Level ${session.level}!`;
+      speak(`Wonderful! You are now on level ${session.level}!`);
+    }
+  }else{
+    session.wrongStreak++; session.correctStreak = 0;
+    fb.textContent = timedOut
+      ? `\u23F0 Time up! The answer is ${current.answer}.`
+      : `\u2716 Not quite. The answer is ${current.answer}.`;
+    fb.className = 'feedback bad';
+    playBuzzer();
+    speak(timedOut
+      ? `${student}, time is up. The correct answer is ${current.answer}.`
+      : `${student}, that is incorrect. The correct answer is ${current.answer}.`);
+    // ---- adaptive level down ----
+    if(session.wrongStreak >= CONFIG.levelDownStreak && session.level > CONFIG.minLevel){
+      session.level--;
+      session.wrongStreak = 0;
+      setLevel(student, session.op, session.level);
+    }
+  }
+  setLevel(student, session.op, session.level);
+  $('st-score').textContent = session.score;
+  $('stars').textContent = '\u2B50'.repeat(session.correctStreak);
+  pendingNext = setTimeout(nextQuestion, 2600);
+}
+
+function endRound(){
+  const pct = Math.round(session.score / questionsPerRound * 100);
+  speak(`${student}, you scored ${session.score} out of ${questionsPerRound}. ` +
+        (pct >= 80 ? 'Excellent work!' : pct >= 50 ? 'Good effort! Keep practising!' : 'Keep trying, you will improve!'));
+  $('scores-title').textContent = `Round finished, ${student}!`;
+  $('scores-body').innerHTML =
+    `<div class="problem" style="font-size:2rem">${session.score} / ${questionsPerRound}</div>
+     <div class="note">${OPS[session.op].name} — now on level ${session.level}</div>`;
+  show('scr-scores');
+}
+
+function showScores(){
+  const rows = loadJSON('mp_records', []).slice(-25).reverse();
+  let html = '<table><tr><th>When</th><th>Student</th><th>Operation</th><th>Lv</th><th>Problem</th><th>Answer</th><th>Result</th></tr>';
+  for(const r of rows){
+    html += `<tr><td>${r.time}</td><td>${r.student}</td><td>${r.op}</td><td>${r.level}</td>
+             <td>${r.problem}</td><td>${r.given}</td>
+             <td style="color:${r.result==='Correct'?'var(--correct)':'var(--wrong)'}">${r.result}</td></tr>`;
+  }
+  html += '</table><div class="note">Showing the last 25 attempts. Download the CSV for the full record.</div>';
+  $('scores-title').textContent = 'Score board';
+  $('scores-body').innerHTML = rows.length ? html : '<div class="note">No attempts recorded yet.</div>';
+  show('scr-scores');
+}
+
+/* =====================================================================
+   WIRING
+   ===================================================================== */
+$('btn-start').onclick = () => {
+  const name = $('inp-name').value.trim();
+  if(!name){ alert('Please type your name first!'); $('inp-name').focus(); return; }
+  student = name;
+  timerSeconds = Math.max(5, Number($('inp-timer').value) || CONFIG.defaultTimerSeconds);
+  questionsPerRound = Math.max(3, Number($('inp-qs').value) || CONFIG.questionsPerRound);
+  ctx();                       // unlock audio on first user gesture
+  $('menu-hello').textContent = `Namaste, ${student}! Choose what you want to practise:`;
+  ['add','sub','mul','div'].forEach(op =>
+    $('lv-'+op).textContent = 'Level ' + getLevel(student, op));
+  speak(`Namaste ${student}! Let us practise mathematics!`);
+  show('scr-menu');
+};
+$('inp-name').addEventListener('keydown', e => { if(e.key === 'Enter') $('btn-start').click(); });
+
+document.querySelectorAll('.op-btn').forEach(b =>
+  b.onclick = () => startSession(b.dataset.op));
+
+$('btn-submit').onclick = () => {
+  const v = $('inp-answer').value.trim();
+  if(v === '') return;
+  evaluate(v, false);
+};
+$('inp-answer').addEventListener('keydown', e => { if(e.key === 'Enter') $('btn-submit').click(); });
+
+$('btn-stop').onclick   = () => { stopTimer(); clearTimeout(pendingNext); show('scr-menu');
+  ['add','sub','mul','div'].forEach(op => $('lv-'+op).textContent = 'Level ' + getLevel(student, op)); };
+$('btn-again').onclick  = () => { ['add','sub','mul','div'].forEach(op =>
+  $('lv-'+op).textContent = 'Level ' + getLevel(student, op)); show('scr-menu'); };
+$('btn-scores').onclick = showScores;
+$('btn-csv').onclick    = downloadCSV;
+$('btn-switch').onclick = () => { $('inp-name').value=''; show('scr-name'); $('inp-name').focus(); };
+</script>
+</body>
+</html>
