@@ -1,6 +1,7 @@
 # Ganita Abhyasa — ಗಣಿತ ಅಭ್ಯಾಸ
-
 **A standalone, offline-friendly, bilingual (English / ಕನ್ನಡ) math practice app for school students — one HTML file, zero installation.**
+
+Built with 100% Assistance from Claude Fable!
 
 Built for classrooms with minimal infrastructure: all you need is a computer with a modern
 web browser. No server, no internet connection (after the file is copied), no software to
