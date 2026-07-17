@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ganita Abhyasa — ಗಣಿತ ಅಭ್ಯಾಸ</title>
+<style>
+  :root{
+    --board:#1f4237; --board-dark:#173428;
+    --frame:#8a5a33; --frame-dark:#6e4523;
+    --chalk:#f6f3e8; --chalk-dim:#cfd8cd;
+    --chalk-yellow:#ffd95e; --chalk-pink:#ff9d9d; --chalk-blue:#9dd6ff;
+    --correct:#7fe08a; --wrong:#ff8a7a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--frame);
+    background-image:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.07) 0 2px, transparent 2px 90px),
+      linear-gradient(var(--frame), var(--frame-dark));
+    font-family:'Comic Sans MS','Chalkboard SE','Segoe Print','Nirmala UI','Tunga',sans-serif;
+    color:var(--chalk);
+    display:flex;align-items:center;justify-content:center;
+    padding:18px;
+  }
+  .board{
+    width:100%;max-width:800px;
+    background:var(--board);
+    background-image:radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.05), transparent 60%),
+                     radial-gradient(ellipse at 80% 80%, rgba(0,0,0,.15), transparent 60%);
+    border:14px solid var(--frame-dark);
+    border-radius:14px;
+    box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 0 60px rgba(0,0,0,.35);
+    padding:28px 30px 26px;
+  }
+  h1{
+    text-align:center;font-size:1.9rem;letter-spacing:1px;
+    color:var(--chalk-yellow);text-shadow:0 0 6px rgba(255,217,94,.35);
+    margin-bottom:4px;
+  }
+  .subtitle{text-align:center;color:var(--chalk-dim);margin-bottom:20px;font-size:.95rem}
+  .screen{display:none}
+  .screen.active{display:block;animation:fadein .3s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  label{display:block;margin:14px 0 6px;color:var(--chalk-blue)}
+  input[type=text],input[type=number],select{
+    width:100%;padding:12px 14px;font:inherit;font-size:1.15rem;
+    background:rgba(255,255,255,.08);border:2px dashed var(--chalk-dim);
+    border-radius:10px;color:var(--chalk);outline:none;
+  }
+  select option{color:#222}
+  input:focus,select:focus{border-color:var(--chalk-yellow)}
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:150px}
+
+  button{
+    font:inherit;cursor:pointer;border:none;border-radius:12px;
+    padding:14px 18px;font-size:1.1rem;color:var(--board-dark);
+    background:var(--chalk-yellow);
+    box-shadow:0 4px 0 rgba(0,0,0,.3);
+    transition:transform .08s ease;
+  }
+  button:hover{transform:translateY(-2px)}
+  button:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+  button:focus-visible{outline:3px solid var(--chalk-blue);outline-offset:2px}
+  .btn-big{width:100%;margin-top:20px}
+  .btn-quiet{background:transparent;color:var(--chalk-dim);border:2px dashed var(--chalk-dim);box-shadow:none;font-size:.9rem;padding:8px 14px}
+
+  .group-title{
+    margin:20px 0 10px;color:var(--chalk-pink);font-size:1.05rem;
+    border-bottom:2px dashed rgba(255,255,255,.2);padding-bottom:6px;
+  }
+  .ops{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .op-btn{
+    padding:18px 10px;font-size:1.1rem;border-radius:14px;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  .op-btn .sym{font-size:1.9rem;line-height:1.1}
+  .op-level{font-size:.78rem;opacity:.75}
+  .c0{background:var(--chalk-yellow)} .c1{background:var(--chalk-pink)}
+  .c2{background:var(--chalk-blue)}   .c3{background:var(--correct)}
+
+  .statusbar{
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+    font-size:.95rem;color:var(--chalk-dim);
+    border-bottom:2px dashed rgba(255,255,255,.2);padding-bottom:10px;margin-bottom:14px;
+  }
+  .statusbar b{color:var(--chalk-yellow)}
+  .problem{
+    text-align:center;margin:14px auto 6px;
+    font-size:2.6rem;letter-spacing:4px;line-height:1.35;
+    white-space:pre-wrap;font-variant-numeric:tabular-nums;
+  }
+  .problem.smaller{font-size:1.9rem;letter-spacing:1px}
+  .problem .opline{color:var(--chalk-pink)}
+  .problem .rule{border-top:4px solid var(--chalk);margin:6px auto 0;width:fit-content;padding:0 8px}
+  .problem .hint{font-size:1rem;color:var(--chalk-dim);letter-spacing:0;margin-top:8px}
+  .frac{display:inline-flex;flex-direction:column;vertical-align:middle;margin:0 6px;line-height:1.15;font-size:.8em}
+  .frac>span{padding:0 10px}
+  .frac>span:first-child{border-bottom:3px solid var(--chalk)}
+
+  .answers{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+  .answers .field{display:flex;align-items:center;gap:8px}
+  .answers .field span{color:var(--chalk-blue);font-size:1.3rem}
+  .answers input{width:150px;font-size:1.6rem;text-align:center;padding:10px}
+  .submit-row{text-align:center;margin-top:16px}
+
+  .timer-wrap{height:16px;background:rgba(255,255,255,.12);border-radius:8px;overflow:hidden;margin-top:20px}
+  .timer-bar{height:100%;width:100%;background:var(--correct);transition:width .25s linear}
+  .timer-bar.hurry{background:var(--wrong)}
+  .timer-label{text-align:center;font-size:.9rem;color:var(--chalk-dim);margin-top:6px}
+
+  .feedback{text-align:center;min-height:2.4rem;margin-top:14px;font-size:1.3rem}
+  .feedback.ok{color:var(--correct)}
+  .feedback.bad{color:var(--wrong)}
+  .stars{text-align:center;font-size:1.2rem;letter-spacing:4px;color:var(--chalk-yellow);min-height:1.5rem}
+
+  .foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:24px}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.85rem}
+  th,td{border:1px dashed rgba(255,255,255,.25);padding:6px 8px;text-align:center}
+  th{color:var(--chalk-yellow)}
+  .note{font-size:.8rem;color:var(--chalk-dim);margin-top:10px;text-align:center}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:560px){
+    .problem{font-size:2rem}
+    .problem.smaller{font-size:1.4rem}
+    .ops{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="board">
+  <h1 id="app-title">&#10024; Ganita Abhyasa &#10024;</h1>
+  <div class="subtitle" id="app-sub">Math practice board</div>
+
+  <!-- ============ SCREEN 1 : NAME + SETTINGS ============ -->
+  <div class="screen active" id="scr-name">
+    <label for="inp-lang" id="lb-lang">Language / ಭಾಷೆ</label>
+    <select id="inp-lang">
+      <option value="en">English</option>
+      <option value="kn">&#3221;&#3240;&#3277;&#3240;&#3233; (Kannada)</option>
+    </select>
+    <label for="inp-name" id="lb-name">What is your name?</label>
+    <input type="text" id="inp-name" autocomplete="off">
+    <div class="row">
+      <div>
+        <label for="inp-timer" id="lb-timer">Seconds per question</label>
+        <input type="number" id="inp-timer" value="30" min="5" max="600">
+      </div>
+      <div>
+        <label for="inp-qs" id="lb-qs">Questions per round</label>
+        <input type="number" id="inp-qs" value="10" min="3" max="50">
+      </div>
+    </div>
+    <button class="btn-big" id="btn-start">Start &#9989;</button>
+    <div class="note" id="nt-storage"></div>
+  </div>
+
+  <!-- ============ SCREEN 2 : TOPIC MENU ============ -->
+  <div class="screen" id="scr-menu">
+    <div class="subtitle" id="menu-hello"></div>
+    <div class="group-title" id="grp-arith">Arithmetic</div>
+    <div class="ops" id="ops-arith"></div>
+    <div class="group-title" id="grp-num">Fractions, Decimals &amp; Percentages</div>
+    <div class="ops" id="ops-num"></div>
+    <div class="group-title" id="grp-alg">Algebra &amp; Geometry</div>
+    <div class="ops" id="ops-alg"></div>
+    <div class="foot">
+      <button class="btn-quiet" id="btn-scores"></button>
+      <button class="btn-quiet" id="btn-csv"></button>
+      <button class="btn-quiet" id="btn-switch"></button>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 3 : PRACTICE ============ -->
+  <div class="screen" id="scr-play">
+    <div class="statusbar">
+      <span id="st-student"></span>
+      <span><span id="st-lvword"></span> <b id="st-level"></b> &nbsp; <span id="st-qword"></span> <b id="st-qnum"></b></span>
+      <span><span id="st-scword"></span> <b id="st-score"></b></span>
+    </div>
+    <div class="problem" id="problem"></div>
+    <div class="answers" id="answers"></div>
+    <div class="submit-row"><button id="btn-submit"></button></div>
+    <div class="timer-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+    <div class="timer-label" id="timer-label"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="stars" id="stars"></div>
+    <div class="foot"><button class="btn-quiet" id="btn-stop"></button></div>
+  </div>
+
+  <!-- ============ SCREEN 4 : SCORES ============ -->
+  <div class="screen" id="scr-scores">
+    <div class="subtitle" id="scores-title"></div>
+    <div id="scores-body"></div>
+    <div class="foot"><button class="btn-big" id="btn-again"></button></div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   TEACHER CONFIGURATION
+   ===================================================================== */
+const CONFIG = {
+  defaultTimerSeconds : 30,
+  questionsPerRound   : 10,
+  levelUpStreak       : 3,     // correct-in-a-row needed to level up
+  levelDownStreak     : 2,     // wrong-in-a-row that triggers level down
+  maxLevel            : 5,
+  minLevel            : 1,
+  feedbackPauseMs     : 2800   // pause after each answer before next question
+};
+
+/* =====================================================================
+   LANGUAGE PACK  (edit / correct Kannada freely — plain text)
+   ===================================================================== */
+const T = {
+  title      :{en:'\u2728 Ganita Abhyasa \u2728', kn:'\u2728 \u0C97\u0CA3\u0CBF\u0CA4 \u0C85\u0CAD\u0CCD\u0CAF\u0CBE\u0CB8 \u2728'},
+  subtitle   :{en:'Math practice board',          kn:'\u0C97\u0CA3\u0CBF\u0CA4 \u0C85\u0CAD\u0CCD\u0CAF\u0CBE\u0CB8 \u0CAB\u0CB2\u0C95'},
+  askName    :{en:'What is your name?',           kn:'\u0CA8\u0CBF\u0CA8\u0CCD\u0CA8 \u0CB9\u0CC6\u0CB8\u0CB0\u0CC7\u0CA8\u0CC1?'},
+  timerLabel :{en:'Seconds per question',         kn:'\u0CAA\u0CCD\u0CB0\u0CA4\u0CBF \u0CAA\u0CCD\u0CB0\u0CB6\u0CCD\u0CA8\u0CC6\u0C97\u0CC6 \u0CB8\u0CC6\u0C95\u0CC6\u0C82\u0CA1\u0CC1\u0C97\u0CB3\u0CC1'},
+  qsLabel    :{en:'Questions per round',          kn:'\u0CAA\u0CCD\u0CB0\u0CA4\u0CBF \u0CB8\u0CC1\u0CA4\u0CCD\u0CA4\u0CBF\u0CA8 \u0CAA\u0CCD\u0CB0\u0CB6\u0CCD\u0CA8\u0CC6\u0C97\u0CB3\u0CC1'},
+  start      :{en:'Start \u2705',                 kn:'\u0CAA\u0CCD\u0CB0\u0CBE\u0CB0\u0C82\u0CAD\u0CBF\u0CB8\u0CBF \u2705'},
+  storageNote:{en:'Progress is saved on this computer. Use "Download score sheet" to collect results.',
+               kn:'\u0CAA\u0CCD\u0CB0\u0C97\u0CA4\u0CBF \u0C88 \u0C95\u0C82\u0CAA\u0CCD\u0CAF\u0CC2\u0C9F\u0CB0\u0CCD\u200C\u0CA8\u0CB2\u0CCD\u0CB2\u0CBF \u0C89\u0CB3\u0CBF\u0CAF\u0CC1\u0CA4\u0CCD\u0CA4\u0CA6\u0CC6. \u0CAB\u0CB2\u0CBF\u0CA4\u0CBE\u0C82\u0CB6\u0C97\u0CB3\u0CBF\u0C97\u0CBE\u0C97\u0CBF CSV \u0CA1\u0CCC\u0CA8\u0CCD\u200C\u0CB2\u0CCB\u0CA1\u0CCD \u0CAC\u0C9F\u0CA8\u0CCD \u0CAC\u0CB3\u0CB8\u0CBF.'},
+  hello      :{en:n=>`Namaste, ${n}! Choose what you want to practise:`,
+               kn:n=>`\u0CA8\u0CAE\u0CB8\u0CCD\u0C95\u0CBE\u0CB0, ${n}! \u0C8F\u0CA8\u0CA8\u0CCD\u0CA8\u0CC1 \u0C85\u0CAD\u0CCD\u0CAF\u0CBE\u0CB8 \u0CAE\u0CBE\u0CA1\u0CAC\u0CC7\u0C95\u0CC1 \u0C86\u0CB0\u0CBF\u0CB8\u0CBF:`},
+  grpArith   :{en:'Arithmetic',                   kn:'\u0C85\u0C82\u0C95\u0C97\u0CA3\u0CBF\u0CA4'},
+  grpAlg     :{en:'Algebra & Geometry',           kn:'\u0CAC\u0CC0\u0C9C\u0C97\u0CA3\u0CBF\u0CA4 \u0CAE\u0CA4\u0CCD\u0CA4\u0CC1 \u0C9C\u0CCD\u0CAF\u0CBE\u0CAE\u0CBF\u0CA4\u0CBF'},
+  level      :{en:'Level',                        kn:'\u0CB9\u0C82\u0CA4'},
+  question   :{en:'Question',                     kn:'\u0CAA\u0CCD\u0CB0\u0CB6\u0CCD\u0CA8\u0CC6'},
+  score      :{en:'Score',                        kn:'\u0C85\u0C82\u0C95'},
+  check      :{en:'Check \u270D',                 kn:'\u0CAA\u0CB0\u0CBF\u0CB6\u0CC0\u0CB2\u0CBF\u0CB8\u0CBF \u270D'},
+  backMenu   :{en:'Back to menu',                 kn:'\u0CAE\u0CC6\u0CA8\u0CC1\u0C97\u0CC6 \u0CB9\u0CBF\u0C82\u0CA4\u0CBF\u0CB0\u0CC1\u0C97\u0CBF'},
+  viewScores :{en:'View scores',                  kn:'\u0C85\u0C82\u0C95\u0C97\u0CB3\u0CA8\u0CCD\u0CA8\u0CC1 \u0CA8\u0CCB\u0CA1\u0CBF'},
+  downloadCSV:{en:'Download score sheet (CSV)',   kn:'\u0C85\u0C82\u0C95\u0CAA\u0C9F\u0CCD\u0C9F\u0CBF \u0CA1\u0CCC\u0CA8\u0CCD\u200C\u0CB2\u0CCB\u0CA1\u0CCD (CSV)'},
+  switchUser :{en:'Change student',               kn:'\u0CB5\u0CBF\u0CA6\u0CCD\u0CAF\u0CBE\u0CB0\u0CCD\u0CA5\u0CBF \u0CAC\u0CA6\u0CB2\u0CBF\u0CB8\u0CBF'},
+  secondsLeft:{en:s=>`${s} seconds left`,         kn:s=>`${s} \u0CB8\u0CC6\u0C95\u0CC6\u0C82\u0CA1\u0CC1\u0C97\u0CB3\u0CC1 \u0C89\u0CB3\u0CBF\u0CA6\u0CBF\u0CB5\u0CC6`},
+  correctFb  :{en:'\u2714 Correct! Well done!',   kn:'\u2714 \u0CB8\u0CB0\u0CBF! \u0CAD\u0CC7\u0CB7\u0CCD!'},
+  wrongFb    :{en:a=>`\u2716 Not quite. The answer is ${a}.`,
+               kn:a=>`\u2716 \u0CA4\u0CAA\u0CCD\u0CAA\u0CBE\u0C97\u0CBF\u0CA6\u0CC6. \u0CB8\u0CB0\u0CBF\u0CAF\u0CBE\u0CA6 \u0C89\u0CA4\u0CCD\u0CA4\u0CB0 ${a}.`},
+  timeUpFb   :{en:a=>`\u23F0 Time up! The answer is ${a}.`,
+               kn:a=>`\u23F0 \u0CB8\u0CAE\u0CAF \u0CAE\u0CC1\u0C97\u0CBF\u0CAF\u0CBF\u0CA4\u0CC1! \u0CB8\u0CB0\u0CBF\u0CAF\u0CBE\u0CA6 \u0C89\u0CA4\u0CCD\u0CA4\u0CB0 ${a}.`},
+  levelUp    :{en:l=>`\u2B06 Level ${l}!`,        kn:l=>`\u2B06 \u0CB9\u0C82\u0CA4 ${l}!`},
+  roundDone  :{en:n=>`Round finished, ${n}!`,     kn:n=>`\u0CB8\u0CC1\u0CA4\u0CCD\u0CA4\u0CC1 \u0CAE\u0CC1\u0C97\u0CBF\u0CAF\u0CBF\u0CA4\u0CC1, ${n}!`},
+  nowOnLevel :{en:(t,l)=>`${t} — now on level ${l}`, kn:(t,l)=>`${t} — \u0C88\u0C97 \u0CB9\u0C82\u0CA4 ${l}`},
+  noScores   :{en:'No attempts recorded yet.',    kn:'\u0C87\u0CA8\u0CCD\u0CA8\u0CC2 \u0CAF\u0CBE\u0CB5\u0CC1\u0CA6\u0CC7 \u0CA6\u0CBE\u0C96\u0CB2\u0CC6 \u0C87\u0CB2\u0CCD\u0CB2.'},
+  last25     :{en:'Showing the last 25 attempts. Download the CSV for the full record.',
+               kn:'\u0C95\u0CCA\u0CA8\u0CC6\u0CAF 25 \u0CAA\u0CCD\u0CB0\u0CAF\u0CA4\u0CCD\u0CA8\u0C97\u0CB3\u0CC1. \u0CAA\u0CC2\u0CB0\u0CCD\u0CA3 \u0CA6\u0CBE\u0C96\u0CB2\u0CC6\u0C97\u0CC6 CSV \u0CA1\u0CCC\u0CA8\u0CCD\u200C\u0CB2\u0CCB\u0CA1\u0CCD \u0CAE\u0CBE\u0CA1\u0CBF.'},
+  typeName   :{en:'Please type your name first!', kn:'\u0CAE\u0CCA\u0CA6\u0CB2\u0CC1 \u0CA8\u0CBF\u0CAE\u0CCD\u0CAE \u0CB9\u0CC6\u0CB8\u0CB0\u0CC1 \u0CAC\u0CB0\u0CC6\u0CAF\u0CBF\u0CB0\u0CBF!'},
+  findX      :{en:'Find x',                       kn:'x \u0C95\u0C82\u0CA1\u0CC1\u0CB9\u0CBF\u0CA1\u0CBF'},
+  findXY     :{en:'Find x and y',                 kn:'x \u0CAE\u0CA4\u0CCD\u0CA4\u0CC1 y \u0C95\u0C82\u0CA1\u0CC1\u0CB9\u0CBF\u0CA1\u0CBF'},
+  findRoots  :{en:'Find both values of x',        kn:'x \u0CA8 \u0C8E\u0CB0\u0CA1\u0CC2 \u0CAC\u0CC6\u0CB2\u0CC6\u0C97\u0CB3\u0CA8\u0CCD\u0CA8\u0CC1 \u0C95\u0C82\u0CA1\u0CC1\u0CB9\u0CBF\u0CA1\u0CBF'},
+  usePi      :{en:'(Use \u03C0 = 22/7)',          kn:'(\u03C0 = 22/7 \u0CAC\u0CB3\u0CB8\u0CBF)'},
+  find       :{en:'Find',                         kn:'\u0C95\u0C82\u0CA1\u0CC1\u0CB9\u0CBF\u0CA1\u0CBF'},
+  when       :{en:'When',                         kn:'\u0CB8\u0CAE\u0CAF'},
+  student    :{en:'Student',                      kn:'\u0CB5\u0CBF\u0CA6\u0CCD\u0CAF\u0CBE\u0CB0\u0CCD\u0CA5\u0CBF'},
+  topic      :{en:'Topic',                        kn:'\u0CB5\u0CBF\u0CB7\u0CAF'},
+  answerWord :{en:'Answer',                       kn:'\u0C89\u0CA4\u0CCD\u0CA4\u0CB0'},
+  result     :{en:'Result',                       kn:'\u0CAB\u0CB2\u0CBF\u0CA4\u0CBE\u0C82\u0CB6'},
+  scoreboard :{en:'Score board',                  kn:'\u0C85\u0C82\u0C95 \u0CAB\u0CB2\u0C95'},
+  noRec      :{en:'No scores recorded yet.',      kn:'\u0C87\u0CA8\u0CCD\u0CA8\u0CC2 \u0C85\u0C82\u0C95\u0C97\u0CB3\u0CBF\u0CB2\u0CCD\u0CB2.'},
+  grpNum     :{en:'Fractions, Decimals & Percentages',
+               kn:'\u0CAD\u0CBF\u0CA8\u0CCD\u0CA8\u0CB0\u0CBE\u0CB6\u0CBF, \u0CA6\u0CB6\u0CAE\u0CBE\u0C82\u0CB6 & \u0CB6\u0CC7\u0C95\u0CA1\u0CBE'},
+  numer      :{en:'numerator =',   kn:'\u0C85\u0C82\u0CB6 ='},
+  denom      :{en:'denominator =', kn:'\u0C9B\u0CC7\u0CA6 ='},
+  fracHint   :{en:'(any equivalent fraction is accepted)',
+               kn:'(\u0CB8\u0CAE\u0CBE\u0CA8 \u0CAD\u0CBF\u0CA8\u0CCD\u0CA8\u0CB0\u0CBE\u0CB6\u0CBF\u0CAF\u0CC2 \u0CB8\u0CB0\u0CBF)'},
+  pctOf      :{en:(p,b)=>`What is ${p}% of ${b}?`,
+               kn:(p,b)=>`${b} \u0CB0 ${p}% \u0C8E\u0CB7\u0CCD\u0C9F\u0CC1?`},
+  pctWhat    :{en:(a,b)=>`${a} is what percent of ${b}?`,
+               kn:(a,b)=>`${b} \u0CB0\u0CB2\u0CCD\u0CB2\u0CBF ${a} \u0CB6\u0CC7\u0C95\u0CA1\u0CBE \u0C8E\u0CB7\u0CCD\u0C9F\u0CC1?`},
+  pctInc     :{en:(b,p)=>`Increase ${b} by ${p}%.`,
+               kn:(b,p)=>`${b} \u0C85\u0CA8\u0CCD\u0CA8\u0CC1 ${p}% \u0CB9\u0CC6\u0C9A\u0CCD\u0C9A\u0CBF\u0CB8\u0CBF.`},
+  pctDec     :{en:(b,p)=>`Decrease ${b} by ${p}%.`,
+               kn:(b,p)=>`${b} \u0C85\u0CA8\u0CCD\u0CA8\u0CC1 ${p}% \u0C95\u0CA1\u0CBF\u0CAE\u0CC6 \u0CAE\u0CBE\u0CA1\u0CBF.`},
+  pctRev     :{en:(p,part)=>`${p}% of a number is ${part}. Find the number.`,
+               kn:(p,part)=>`\u0C92\u0C82\u0CA6\u0CC1 \u0CB8\u0C82\u0C96\u0CCD\u0CAF\u0CC6\u0CAF ${p}% = ${part}. \u0C86 \u0CB8\u0C82\u0C96\u0CCD\u0CAF\u0CC6\u0CAF\u0CA8\u0CCD\u0CA8\u0CC1 \u0C95\u0C82\u0CA1\u0CC1\u0CB9\u0CBF\u0CA1\u0CBF.`}
+};
+
+/* Spoken phrases — {en, kn}; Kannada spoken only if a Kannada voice exists */
+const SPEAK = {
+  greet   : n      => ({en:`Namaste ${n}! Let us practise mathematics!`,
+                        kn:`\u0CA8\u0CAE\u0CB8\u0CCD\u0C95\u0CBE\u0CB0 ${n}! \u0C97\u0CA3\u0CBF\u0CA4 \u0C85\u0CAD\u0CCD\u0CAF\u0CBE\u0CB8 \u0CAE\u0CBE\u0CA1\u0CCB\u0CA3!`}),
+  correct : n      => ({en:`${n}, this is correct! Well done!`,
+                        kn:`${n}, \u0C87\u0CA6\u0CC1 \u0CB8\u0CB0\u0CBF\u0CAF\u0CBE\u0C97\u0CBF\u0CA6\u0CC6! \u0CAD\u0CC7\u0CB7\u0CCD!`}),
+  wrong   : (n,a)  => ({en:`${n}, that is incorrect. The correct answer is ${a}.`,
+                        kn:`${n}, \u0C87\u0CA6\u0CC1 \u0CA4\u0CAA\u0CCD\u0CAA\u0CBE\u0C97\u0CBF\u0CA6\u0CC6. \u0CB8\u0CB0\u0CBF\u0CAF\u0CBE\u0CA6 \u0C89\u0CA4\u0CCD\u0CA4\u0CB0 ${a}.`}),
+  timeUp  : (n,a)  => ({en:`${n}, time is up. The correct answer is ${a}.`,
+                        kn:`${n}, \u0CB8\u0CAE\u0CAF \u0CAE\u0CC1\u0C97\u0CBF\u0CAF\u0CBF\u0CA4\u0CC1. \u0CB8\u0CB0\u0CBF\u0CAF\u0CBE\u0CA6 \u0C89\u0CA4\u0CCD\u0CA4\u0CB0 ${a}.`}),
+  levelUp : l      => ({en:`Wonderful! You are now on level ${l}!`,
+                        kn:`\u0C85\u0CA6\u0CCD\u0CAD\u0CC1\u0CA4! \u0CA8\u0CC0\u0CB5\u0CC1 \u0C88\u0C97 \u0CB9\u0C82\u0CA4 ${l} \u0CA8\u0CB2\u0CCD\u0CB2\u0CBF \u0C87\u0CA6\u0CCD\u0CA6\u0CC0\u0CB0\u0CBF!`}),
+  summary : (n,s,q,pct) => ({
+    en:`${n}, you scored ${s} out of ${q}. ` + (pct>=80?'Excellent work!':pct>=50?'Good effort! Keep practising!':'Keep trying, you will improve!'),
+    kn:`${n}, \u0CA8\u0CC0\u0CB5\u0CC1 ${q} \u0CB0\u0CB2\u0CCD\u0CB2\u0CBF ${s} \u0C85\u0C82\u0C95 \u0C97\u0CB3\u0CBF\u0CB8\u0CBF\u0CA6\u0CCD\u0CA6\u0CC0\u0CB0\u0CBF. ` +
+       (pct>=80?'\u0C85\u0CA4\u0CCD\u0CAF\u0CC1\u0CA4\u0CCD\u0CA4\u0CAE!':pct>=50?'\u0C9A\u0CC6\u0CA8\u0CCD\u0CA8\u0CBE\u0C97\u0CBF\u0CA6\u0CC6! \u0C85\u0CAD\u0CCD\u0CAF\u0CBE\u0CB8 \u0CAE\u0CC1\u0C82\u0CA6\u0CC1\u0CB5\u0CB0\u0CC6\u0CB8\u0CBF!':'\u0CAA\u0CCD\u0CB0\u0CAF\u0CA4\u0CCD\u0CA8\u0CBF\u0CB8\u0CC1\u0CA4\u0CCD\u0CA4\u0CBF\u0CB0\u0CBF, \u0CB8\u0CC1\u0CA7\u0CBE\u0CB0\u0CBF\u0CB8\u0CC1\u0CA4\u0CCD\u0CA4\u0CC0\u0CB0\u0CBF!')})
+};
+
+/* Topic names */
+const TOPICS = {
+  add :{group:'arith', sym:'+',        en:'Addition',               kn:'\u0CB8\u0C82\u0C95\u0CB2\u0CA8'},
+  sub :{group:'arith', sym:'\u2212',   en:'Subtraction',            kn:'\u0CB5\u0CCD\u0CAF\u0CB5\u0C95\u0CB2\u0CA8'},
+  mul :{group:'arith', sym:'\u00D7',   en:'Multiplication',         kn:'\u0C97\u0CC1\u0CA3\u0CBE\u0C95\u0CBE\u0CB0'},
+  div :{group:'arith', sym:'\u00F7',   en:'Division',               kn:'\u0CAD\u0CBE\u0C97\u0CBE\u0C95\u0CBE\u0CB0'},
+  bod :{group:'arith', sym:'( )',      en:'BODMAS \u2014 Order of Operations', kn:'BODMAS \u2014 ಕ್ರಿಯೆಗಳ ಕ್ರಮ'},
+  frac:{group:'num',   sym:'\u00BD',   en:'Fractions',              kn:'\u0CAD\u0CBF\u0CA8\u0CCD\u0CA8\u0CB0\u0CBE\u0CB6\u0CBF'},
+  dec :{group:'num',   sym:'0.5',      en:'Decimals',               kn:'\u0CA6\u0CB6\u0CAE\u0CBE\u0C82\u0CB6'},
+  pct :{group:'num',   sym:'%',        en:'Percentages',            kn:'\u0CB6\u0CC7\u0C95\u0CA1\u0CBE'},
+  lin :{group:'alg',   sym:'x',        en:'Simple Equations',       kn:'\u0CB8\u0CB0\u0CB3 \u0CB8\u0CAE\u0CC0\u0C95\u0CB0\u0CA3\u0C97\u0CB3\u0CC1'},
+  sim :{group:'alg',   sym:'x, y',     en:'Simultaneous Equations', kn:'\u0C9C\u0CCB\u0CA1\u0CBF \u0CB8\u0CAE\u0CC0\u0C95\u0CB0\u0CA3\u0C97\u0CB3\u0CC1'},
+  quad:{group:'alg',   sym:'x\u00B2',  en:'Quadratic Equations',    kn:'\u0CB5\u0CB0\u0CCD\u0C97 \u0CB8\u0CAE\u0CC0\u0C95\u0CB0\u0CA3\u0C97\u0CB3\u0CC1'},
+  geo :{group:'alg',   sym:'\u25B3\u25CB', en:'Geometry: Area & Volume', kn:'\u0C9C\u0CCD\u0CAF\u0CBE\u0CAE\u0CBF\u0CA4\u0CBF: \u0CB5\u0CBF\u0CB8\u0CCD\u0CA4\u0CC0\u0CB0\u0CCD\u0CA3 & \u0C98\u0CA8\u0CAB\u0CB2'}
+};
+
+/* Geometry vocabulary (Kannada shape names stored in genitive: "of the ...") */
+const GEO_WORDS = {
+  rectangle:{en:'rectangle', kn:'\u0C86\u0CAF\u0CA4\u0CA6'},
+  square   :{en:'square',    kn:'\u0C9A\u0CCC\u0C95\u0CA6'},
+  triangle :{en:'triangle',  kn:'\u0CA4\u0CCD\u0CB0\u0CBF\u0CAD\u0CC1\u0C9C\u0CA6'},
+  circle   :{en:'circle',    kn:'\u0CB5\u0CC3\u0CA4\u0CCD\u0CA4\u0CA6'},
+  cube     :{en:'cube',      kn:'\u0C98\u0CA8\u0CA6'},
+  cuboid   :{en:'cuboid',    kn:'\u0C86\u0CAF\u0CA4\u0C98\u0CA8\u0CA6'},
+  cylinder :{en:'cylinder',  kn:'\u0CB8\u0CBF\u0CB2\u0CBF\u0C82\u0CA1\u0CB0\u0CCD\u200C\u0CA8'},
+  cone     :{en:'cone',      kn:'\u0CB6\u0C82\u0C95\u0CC1\u0CB5\u0CBF\u0CA8'},
+  sphere   :{en:'sphere',    kn:'\u0C97\u0CCB\u0CB3\u0CA6'},
+  area     :{en:'area',           kn:'\u0CB5\u0CBF\u0CB8\u0CCD\u0CA4\u0CC0\u0CB0\u0CCD\u0CA3'},
+  perimeter:{en:'perimeter',      kn:'\u0CB8\u0CC1\u0CA4\u0CCD\u0CA4\u0CB3\u0CA4\u0CC6'},
+  circumference:{en:'circumference', kn:'\u0CAA\u0CB0\u0CBF\u0CA7\u0CBF'},
+  volume   :{en:'volume',         kn:'\u0C98\u0CA8\u0CAB\u0CB2'},
+  surface  :{en:'total surface area', kn:'\u0C92\u0C9F\u0CCD\u0C9F\u0CC1 \u0CAE\u0CC7\u0CB2\u0CCD\u0CAE\u0CC8 \u0CB5\u0CBF\u0CB8\u0CCD\u0CA4\u0CC0\u0CB0\u0CCD\u0CA3'},
+  csa      :{en:'curved surface area', kn:'\u0CB5\u0C95\u0CCD\u0CB0 \u0CAE\u0CC7\u0CB2\u0CCD\u0CAE\u0CC8 \u0CB5\u0CBF\u0CB8\u0CCD\u0CA4\u0CC0\u0CB0\u0CCD\u0CA3'},
+  length   :{en:'length',  kn:'\u0C89\u0CA6\u0CCD\u0CA6'},
+  breadth  :{en:'breadth', kn:'\u0C85\u0C97\u0CB2'},
+  side     :{en:'side',    kn:'\u0CAC\u0CBE\u0CB9\u0CC1'},
+  base     :{en:'base',    kn:'\u0CAA\u0CBE\u0CA6'},
+  height   :{en:'height',  kn:'\u0C8E\u0CA4\u0CCD\u0CA4\u0CB0'},
+  radius   :{en:'radius',  kn:'\u0CA4\u0CCD\u0CB0\u0CBF\u0C9C\u0CCD\u0CAF'}
+};
+
+/* =====================================================================
+   STATE + PERSISTENCE
+   ===================================================================== */
+let LANG = localStorage.getItem('mp_lang') || 'en';
+let student = '', timerSeconds = CONFIG.defaultTimerSeconds, questionsPerRound = CONFIG.questionsPerRound;
+let session = null, current = null;
+let timerId = null, timeLeft = 0, pendingNext = null;
+
+const t = key => { const v = T[key][LANG]; return v; };
+function loadJSON(k,f){ try{ return JSON.parse(localStorage.getItem(k)) || f; }catch(e){ return f; } }
+function saveJSON(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+function getLevel(n,op){ const p=loadJSON('mp_progress',{}); return (p[n]&&p[n][op])||CONFIG.minLevel; }
+function setLevel(n,op,l){ const p=loadJSON('mp_progress',{}); if(!p[n])p[n]={}; p[n][op]=l; saveJSON('mp_progress',p); }
+function addRecord(r){ const a=loadJSON('mp_records',[]); a.push(r); saveJSON('mp_records',a); }
+
+function downloadCSV(){
+  const rows = loadJSON('mp_records', []);
+  if(rows.length===0){ alert(t('noRec')); return; }
+  const header=['DateTime','Student','Topic','Level','Problem','StudentAnswer','CorrectAnswer','Result','TimeTakenSec'];
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const csv=[header.join(',')].concat(rows.map(r=>
+    [r.time,r.student,r.op,r.level,r.problem,r.given,r.answer,r.result,r.seconds].map(esc).join(','))).join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='math_practice_scores.csv'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* =====================================================================
+   SOUND + TTS
+   ===================================================================== */
+let audioCtx=null;
+function ctx(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
+function tone(f,st,d,type,vol){ const c=ctx(),o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(.0001,c.currentTime+st);
+  g.gain.linearRampToValueAtTime(vol,c.currentTime+st+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+st+d);
+  o.connect(g).connect(c.destination); o.start(c.currentTime+st); o.stop(c.currentTime+st+d+.05); }
+function playCelebration(){ [523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,i*.13,.35,'triangle',.25)); tone(1318.5,.55,.5,'triangle',.2); }
+function playBuzzer(){ tone(160,0,.25,'sawtooth',.22); tone(120,.28,.35,'sawtooth',.22); }
+
+function findVoice(langPrefix){
+  const vs = speechSynthesis.getVoices();
+  return vs.find(v=>v.lang && v.lang.toLowerCase().startsWith(langPrefix)) || null;
+}
+/* speak({en:'...', kn:'...'}) — uses Kannada voice if present, else English */
+function speak(phrases){
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  let text, voice;
+  if(LANG==='kn'){
+    voice = findVoice('kn');
+    text  = voice ? phrases.kn : phrases.en;      // graceful fallback
+    if(!voice) voice = findVoice('en-in') || findVoice('en');
+  }else{
+    text  = phrases.en;
+    voice = findVoice('en-in') || findVoice('en');
+  }
+  const u=new SpeechSynthesisUtterance(text);
+  if(voice) u.voice=voice;
+  u.lang = voice ? voice.lang : (LANG==='kn'?'kn-IN':'en-IN');
+  u.rate=.95;
+  speechSynthesis.speak(u);
+}
+if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=()=>{};
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const $=id=>document.getElementById(id);
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); }
+function rint(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function pick(arr){ return arr[rint(0,arr.length-1)]; }
+function randNDigits(n){ return rint(n===1?1:Math.pow(10,n-1), Math.pow(10,n)-1); }
+/* "+ 5x" / "− 5x" style sign formatting for equations */
+function signed(v, unit){ const m=Math.abs(v); return (v<0?' \u2212 ':' + ') + (unit&&m===1?'':m) + (unit||''); }
+function leadTerm(v, unit){ return (v<0?'\u2212':'') + (Math.abs(v)===1&&unit?'':Math.abs(v)) + (unit||''); }
+
+/* =====================================================================
+   PROBLEM GENERATORS
+   Each returns:
+   { html, cls, fields:[{label, answer}], anyOrder, problemText, hint }
+   ===================================================================== */
+function genArith(op, level){
+  let a,b,answer;
+  switch(op){
+    case 'add': a=randNDigits(level); b=randNDigits(level); answer=a+b; break;
+    case 'sub': a=randNDigits(level); b=randNDigits(level); if(b>a)[a,b]=[b,a]; answer=a-b; break;
+    case 'mul': a=randNDigits(level); b=randNDigits(Math.min(level,2)); answer=a*b; break;
+    case 'div': b=randNDigits(Math.min(level,2))||2; answer=randNDigits(level); a=answer*b; break;
+  }
+  let html;
+  if(op==='div'){
+    html=`<div>${a} <span class="opline">\u00F7</span> ${b} = ?</div>`;
+  }else{
+    const sym=TOPICS[op].sym;
+    const w=Math.max(String(a).length,String(b).length)+2;
+    html=`<div>${String(a).padStart(w,'\u00A0')}</div>`+
+         `<div class="opline">${sym} ${String(b).padStart(w-2,'\u00A0')}</div>`+
+         `<div class="rule">?</div>`;
+  }
+  const ptext = op==='div' ? `${a} \u00F7 ${b}` : `${a} ${TOPICS[op].sym} ${b}`;
+  return {html, cls:'', fields:[{label:'=', answer}], anyOrder:false, problemText:ptext};
+}
+
+/* ---- Simple linear equations, integer x guaranteed ---- */
+function genLin(level){
+  let x, eq;
+  switch(level){
+    case 1:{ x=rint(1,9);  const a=rint(1,9);           eq=`x + ${a} = ${x+a}`; break; }
+    case 2:{ x=rint(2,9);  const a=rint(2,9);           eq=`${a}x = ${a*x}`; break; }
+    case 3:{ x=rint(1,12); const a=rint(2,9),b=rint(1,20); eq=`${a}x + ${b} = ${a*x+b}`; break; }
+    case 4:{ x=rint(2,20); const a=rint(2,12),b=rint(1,50); eq=`${a}x \u2212 ${b} = ${a*x-b}`; break; }
+    default:{ x=rint(1,12); const a=rint(2,9),b=rint(1,9);  eq=`${a}(x + ${b}) = ${a*(x+b)}`; }
+  }
+  return {html:`<div>${eq}</div><div class="hint">${t('findX')}</div>`, cls:'smaller',
+          fields:[{label:'x =', answer:x}], anyOrder:false, problemText:eq};
+}
+
+/* ---- Simultaneous equations, integer (x, y), non-singular ---- */
+function genSim(level){
+  const hi = level<=2 ? 5 : 9;
+  const x = rint(1, level<=2 ? 5 : 12);
+  const y = rint(1, level<=2 ? 5 : 12);
+  let a1,b1,a2,b2;
+  do{
+    a1=rint(1,hi); b1=rint(1,hi); a2=rint(1,hi); b2=rint(1,hi);
+  }while(a1*b2 - a2*b1 === 0);
+  const c1=a1*x+b1*y, c2=a2*x+b2*y;
+  const term=(c,v)=> (c===1?'':c)+v;
+  const l1=`${term(a1,'x')} + ${term(b1,'y')} = ${c1}`;
+  const l2=`${term(a2,'x')} + ${term(b2,'y')} = ${c2}`;
+  return {html:`<div>${l1}</div><div>${l2}</div><div class="hint">${t('findXY')}</div>`, cls:'smaller',
+          fields:[{label:'x =',answer:x},{label:'y =',answer:y}], anyOrder:false,
+          problemText:`${l1} ; ${l2}`};
+}
+
+/* ---- Quadratic equations with integer roots (factorable) ---- */
+function genQuad(level){
+  const range = level<=2 ? [1,6] : level<=4 ? [-9,9] : [-12,12];
+  let r1=rint(range[0],range[1]), r2=rint(range[0],range[1]);
+  if(level<=2){ if(r1===0)r1=1; if(r2===0)r2=2; }
+  else { if(r1===0)r1=-3; if(r2===0)r2=4; }
+  const b=-(r1+r2), c=r1*r2;
+  let eq='x\u00B2';
+  if(b!==0) eq+=signed(b,'x');
+  if(c!==0) eq+=signed(c,'');
+  eq+=' = 0';
+  return {html:`<div>${eq}</div><div class="hint">${t('findRoots')}</div>`, cls:'smaller',
+          fields:[{label:'x\u2081 =',answer:r1},{label:'x\u2082 =',answer:r2}], anyOrder:true,
+          problemText:eq};
+}
+
+/* ---- Geometry: areas & volumes, all answers integers.
+       π problems use 22/7 with radius a multiple of 7. ---- */
+function genGeo(level){
+  const W=GEO_WORDS, L=LANG;
+  const item = (shape,measure,params,answer,usePi)=>{
+    const ps = params.map(p=>`${W[p[0]][L]} = ${p[1]}`).join(', ');
+    const txt = L==='kn'
+      ? `${W[shape][L]} ${W[measure][L]} ${t('find')}: ${ps}`
+      : `${t('find')} the ${W[measure][L]} of a ${W[shape][L]}: ${ps}`;
+    const pi = usePi ? `<div class="hint">${t('usePi')}</div>` : '';
+    return {html:`<div>${txt}</div>${pi}`, cls:'smaller',
+            fields:[{label:'=',answer}], anyOrder:false,
+            problemText:`${W[measure].en} of ${W[shape].en}: ${params.map(p=>W[p[0]].en+'='+p[1]).join(', ')}`};
+  };
+  switch(level){
+    case 1: return pick([
+      ()=>{const l=rint(3,12),b=rint(2,9);  return item('rectangle','area',[['length',l],['breadth',b]], l*b);},
+      ()=>{const s=rint(2,12);              return item('square','area',[['side',s]], s*s);},
+      ()=>{const l=rint(3,12),b=rint(2,9);  return item('rectangle','perimeter',[['length',l],['breadth',b]], 2*(l+b));}
+    ])();
+    case 2: return pick([
+      ()=>{const b=2*rint(2,8),h=rint(3,12);return item('triangle','area',[['base',b],['height',h]], b*h/2);},
+      ()=>{const s=rint(3,15);              return item('square','perimeter',[['side',s]], 4*s);},
+      ()=>{const l=rint(5,20),b=rint(3,15); return item('rectangle','area',[['length',l],['breadth',b]], l*b);}
+    ])();
+    case 3: return pick([
+      ()=>{const r=7*rint(1,2);             return item('circle','area',[['radius',r]], 22*r*r/7, true);},
+      ()=>{const r=7*rint(1,3);             return item('circle','circumference',[['radius',r]], 2*22*r/7, true);}
+    ])();
+    case 4: return pick([
+      ()=>{const s=rint(2,10);              return item('cube','volume',[['side',s]], s*s*s);},
+      ()=>{const l=rint(2,10),b=rint(2,10),h=rint(2,10); return item('cuboid','volume',[['length',l],['breadth',b],['height',h]], l*b*h);},
+      ()=>{const s=rint(2,10);              return item('cube','surface',[['side',s]], 6*s*s);}
+    ])();
+    default: return pick([
+      ()=>{const r=7*rint(1,2),h=rint(2,10);return item('cylinder','volume',[['radius',r],['height',h]], 22*r*r*h/7, true);},
+      ()=>{const r=7*rint(1,2),h=3*rint(1,4);return item('cone','volume',[['radius',r],['height',h]], 22*r*r*h/21, true);},
+      ()=>{const r=7*rint(1,2),h=rint(2,12);return item('cylinder','csa',[['radius',r],['height',h]], 2*22*r*h/7, true);},
+      ()=>{                                  return item('sphere','volume',[['radius',21]], 38808, true);}
+    ])();
+  }
+}
+
+/* ---- Fractions.
+       Answer entered as numerator + denominator; ANY equivalent
+       fraction is accepted (checked by cross-multiplication). ---- */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a||1; }
+function fracHTML(n,d){ return `<span class="frac"><span>${n}</span><span>${d}</span></span>`; }
+function genFrac(level){
+  let n1,d1,n2,d2,op;
+  switch(level){
+    case 1:  /* same denominator, add/subtract */
+      d1=d2=rint(3,12); op=pick(['+','\u2212']);
+      n1=rint(1,d1-1); n2=rint(1,d1-1);
+      if(op==='\u2212'&&n2>n1)[n1,n2]=[n2,n1]; break;
+    case 2:  /* different denominators, add/subtract */
+      op=pick(['+','\u2212']);
+      d1=rint(2,9); do{ d2=rint(2,9); }while(d2===d1);
+      n1=rint(1,d1); n2=rint(1,d2);
+      if(op==='\u2212'&&n1*d2<n2*d1){ [n1,d1,n2,d2]=[n2,d2,n1,d1]; } break;
+    case 3:  /* multiplication */
+      op='\u00D7'; n1=rint(1,9); d1=rint(2,9); n2=rint(1,9); d2=rint(2,9); break;
+    case 4:  /* division */
+      op='\u00F7'; n1=rint(1,9); d1=rint(2,9); n2=rint(1,9); d2=rint(2,9); break;
+    default: /* mixed, larger numbers */
+      op=pick(['+','\u2212','\u00D7','\u00F7']);
+      d1=rint(2,12); d2=rint(2,12); n1=rint(1,12); n2=rint(1,12);
+      if(op==='\u2212'&&n1*d2<n2*d1){ [n1,d1,n2,d2]=[n2,d2,n1,d1]; }
+  }
+  let an,ad;
+  if(op==='+'){ an=n1*d2+n2*d1; ad=d1*d2; }
+  else if(op==='\u2212'){ an=n1*d2-n2*d1; ad=d1*d2; }
+  else if(op==='\u00D7'){ an=n1*n2; ad=d1*d2; }
+  else { an=n1*d2; ad=d1*n2; }
+  const g=gcd(an,ad); an/=g; ad/=g;   // store in lowest terms for display
+  return {
+    html:`<div>${fracHTML(n1,d1)} <span class="opline">${op}</span> ${fracHTML(n2,d2)} = ?</div>`+
+         `<div class="hint">${t('fracHint')}</div>`,
+    cls:'smaller',
+    fields:[{label:t('numer'),answer:an},{label:t('denom'),answer:ad}],
+    anyOrder:false,
+    check:v=>v[1]!==0 && v[0]*ad===v[1]*an,   // equivalence test
+    ansText:`${an}/${ad}`,
+    problemText:`${n1}/${d1} ${op} ${n2}/${d2}`
+  };
+}
+
+/* ---- Decimals. All values are built from integers and scaled,
+       so every answer is an exact 1- or 2-place decimal. ---- */
+function genDec(level){
+  let text, answer;
+  switch(level){
+    case 1:{ const a=rint(11,99), b=rint(11,99);
+      text=`${(a/10).toFixed(1)} + ${(b/10).toFixed(1)} = ?`; answer=(a+b)/10; break; }
+    case 2:{ let a=rint(101,999), b=rint(101,999); if(b>a)[a,b]=[b,a];
+      text=`${(a/100).toFixed(2)} \u2212 ${(b/100).toFixed(2)} = ?`; answer=(a-b)/100; break; }
+    case 3:{ const a=rint(11,99), k=rint(2,9);
+      text=`${(a/10).toFixed(1)} \u00D7 ${k} = ?`; answer=a*k/10; break; }
+    case 4:{ const a=rint(11,99), b=rint(11,99);
+      text=`${(a/10).toFixed(1)} \u00D7 ${(b/10).toFixed(1)} = ?`; answer=a*b/100; break; }
+    default:{ const q=rint(11,999), k=rint(2,9);
+      text=`${(q*k/100).toFixed(2)} \u00F7 ${k} = ?`; answer=q/100; }
+  }
+  return { html:`<div>${text}</div>`, cls:'smaller',
+    fields:[{label:'=',answer}], anyOrder:false,
+    check:v=>Math.abs(v[0]-answer)<1e-6,
+    ansText:String(answer),
+    problemText:text.replace(' = ?','') };
+}
+
+/* ---- Percentages. Constructed backwards so answers are integers. ---- */
+function genPct(level){
+  let text, answer, ptxt, label='=';
+  switch(level){
+    case 1:{ const p=pick([10,25,50]);
+      const base = p===10 ? 10*rint(1,20) : p===25 ? 4*rint(1,25) : 2*rint(5,50);
+      answer=p*base/100; text=T.pctOf[LANG](p,base); ptxt=`${p}% of ${base}`; break; }
+    case 2:{ const p=5*rint(1,18), base=20*rint(1,25);
+      answer=p*base/100; text=T.pctOf[LANG](p,base); ptxt=`${p}% of ${base}`; break; }
+    case 3:{ const p=5*rint(1,19), base=20*rint(1,15), part=p*base/100;
+      answer=p; label='% ='; text=T.pctWhat[LANG](part,base); ptxt=`${part} is what % of ${base}`; break; }
+    case 4:{ const p=5*rint(1,18), base=20*rint(1,25), inc=Math.random()<.5;
+      answer = inc ? base+p*base/100 : base-p*base/100;
+      text=(inc?T.pctInc:T.pctDec)[LANG](base,p);
+      ptxt=`${inc?'increase':'decrease'} ${base} by ${p}%`; break; }
+    default:{ const p=5*rint(1,19), whole=20*rint(1,25), part=p*whole/100;
+      answer=whole; text=T.pctRev[LANG](p,part); ptxt=`${p}% of ? = ${part}`; }
+  }
+  return { html:`<div>${text}</div>`, cls:'smaller',
+    fields:[{label,answer}], anyOrder:false, problemText:ptxt };
+}
+
+/* ---- BODMAS / order of operations.
+       Five levels of mixed expressions. Every division is exact and
+       every intermediate & final result is a non-negative integer,
+       so the ONLY challenge is the order of operations. ---- */
+const BOD_TEMPLATES = {
+  1: [ /* two operations, no brackets — precedence matters */
+    ()=>{const a=rint(2,9),b=rint(2,9),c=rint(2,9);
+         return {txt:`${a} + ${b} × ${c}`, ans:a+b*c};},
+    ()=>{const b=rint(2,5),c=rint(2,5),a=b*c+rint(1,9);
+         return {txt:`${a} − ${b} × ${c}`, ans:a-b*c};},
+    ()=>{const b=rint(2,9),c=rint(2,9),a=rint(1,b*c-1);
+         return {txt:`${b} × ${c} − ${a}`, ans:b*c-a};},
+    ()=>{const c=rint(2,5),q=rint(2,9),a=rint(2,9);
+         return {txt:`${a} + ${q*c} ÷ ${c}`, ans:a+q};},
+    ()=>{const c=rint(2,5),q=rint(2,6),a=q+rint(1,9);
+         return {txt:`${a} − ${q*c} ÷ ${c}`, ans:a-q};}
+  ],
+  2: [ /* three operations, no brackets */
+    ()=>{const a=rint(2,6),b=rint(2,6),c=rint(2,6),d=rint(2,6);
+         return {txt:`${a} × ${b} + ${c} × ${d}`, ans:a*b+c*d};},
+    ()=>{let a=rint(3,7),b=rint(3,7),c=rint(2,4),d=rint(2,4);
+         if(a*b<c*d){[a,c]=[c,a];[b,d]=[d,b];}
+         return {txt:`${a} × ${b} − ${c} × ${d}`, ans:a*b-c*d};},
+    ()=>{const a=rint(2,9),b=rint(2,6),c=rint(2,6),d=rint(1,a+b*c-1);
+         return {txt:`${a} + ${b} × ${c} − ${d}`, ans:a+b*c-d};},
+    ()=>{const a=rint(2,6),b=rint(2,6),dv=rint(2,5),q=rint(2,6);
+         return {txt:`${a} × ${b} + ${q*dv} ÷ ${dv}`, ans:a*b+q};},
+    ()=>{const dv=rint(2,5),q=rint(2,5),a=q+rint(1,9),d=rint(2,9);
+         return {txt:`${a} − ${q*dv} ÷ ${dv} + ${d}`, ans:a-q+d};}
+  ],
+  3: [ /* simple brackets */
+    ()=>{const a=rint(2,9),b=rint(2,9),c=rint(2,9);
+         return {txt:`(${a} + ${b}) × ${c}`, ans:(a+b)*c};},
+    ()=>{const b=rint(2,8),a=b+rint(1,9),c=rint(2,9);
+         return {txt:`(${a} − ${b}) × ${c}`, ans:(a-b)*c};},
+    ()=>{const c=rint(2,6),q=rint(2,9),sum=q*c,a=rint(1,sum-1);
+         return {txt:`(${a} + ${sum-a}) ÷ ${c}`, ans:q};},
+    ()=>{const a=rint(2,9),c=rint(2,8),b=c+rint(1,9);
+         return {txt:`${a} × (${b} − ${c})`, ans:a*(b-c)};},
+    ()=>{const a=rint(2,9),b=rint(2,9),c=rint(2,9);
+         return {txt:`${c} × (${a} + ${b})`, ans:c*(a+b)};}
+  ],
+  4: [ /* brackets combined with an outside operation */
+    ()=>{const a=rint(2,7),b=rint(2,7),c=rint(2,6),s=(a+b)*c,d=rint(1,Math.min(20,s-1));
+         return {txt:`(${a} + ${b}) × ${c} − ${d}`, ans:s-d};},
+    ()=>{const a=rint(2,9),c=rint(2,7),b=c+rint(1,8),d=rint(2,6);
+         return {txt:`${a} + (${b} − ${c}) × ${d}`, ans:a+(b-c)*d};},
+    ()=>{const a=rint(2,6),b=rint(2,6),d=rint(2,5),c=d+rint(1,5);
+         return {txt:`(${a} + ${b}) × (${c} − ${d})`, ans:(a+b)*(c-d)};},
+    ()=>{const c=rint(2,5),q=rint(2,7),b=rint(1,15),d=rint(2,9);
+         return {txt:`(${q*c+b} − ${b}) ÷ ${c} + ${d}`, ans:q+d};},
+    ()=>{const a=rint(5,9),b=rint(5,9),c=rint(2,6),d=rint(2,6);
+         return {txt:`${a} × ${b} − (${c} + ${d})`, ans:a*b-(c+d)};}
+  ],
+  5: [ /* longer mixes and the ÷-before-× trap */
+    ()=>{const a=rint(2,6),b=rint(2,7),c=rint(2,7),e=rint(2,5),q=rint(2,6);
+         return {txt:`${a} × (${b} + ${c}) − ${q*e} ÷ ${e}`, ans:a*(b+c)-q};},
+    ()=>{const a=rint(2,6),b=rint(2,6),c=rint(2,6),e=rint(2,5),q=rint(2,6);
+         return {txt:`(${a} + ${b}) × ${c} − ${q*e} ÷ ${e}`, ans:(a+b)*c-q};},
+    ()=>{const a=rint(2,6),b=rint(2,6),c=rint(2,6),d=rint(2,6),e=rint(2,6);
+         return {txt:`(${a} + ${b}) × ${c} + ${d} × ${e}`, ans:(a+b)*c+d*e};},
+    ()=>{const a=rint(2,9),b=rint(2,6),c=rint(2,6),d=rint(2,6),s=a+b*(c+d),e=rint(1,Math.min(15,s-1));
+         return {txt:`${a} + ${b} × (${c} + ${d}) − ${e}`, ans:s-e};},
+    ()=>{const dv=rint(2,5),q=rint(2,6),a=rint(2,6);
+         return {txt:`${q*dv} ÷ ${dv} × ${a}`, ans:q*a};}
+  ]
+};
+function genBod(level){
+  const {txt, ans} = pick(BOD_TEMPLATES[level] || BOD_TEMPLATES[5])();
+  return {html:`<div>${txt} = ?</div>`, cls:'smaller',
+          fields:[{label:'=',answer:ans}], anyOrder:false, problemText:txt};
+}
+
+function makeProblem(topic, level){
+  if(topic==='bod') return genBod(level);
+  if(TOPICS[topic].group==='arith') return genArith(topic, level);
+  if(topic==='frac') return genFrac(level);
+  if(topic==='dec')  return genDec(level);
+  if(topic==='pct')  return genPct(level);
+  if(topic==='lin')  return genLin(level);
+  if(topic==='sim')  return genSim(level);
+  if(topic==='quad') return genQuad(level);
+  return genGeo(level);
+}
+
+/* =====================================================================
+   GAME FLOW
+   ===================================================================== */
+function startSession(topic){
+  session={op:topic, qnum:0, score:0, correctStreak:0, wrongStreak:0, level:getLevel(student,topic)};
+  show('scr-play'); nextQuestion();
+}
+
+function renderAnswerFields(fields){
+  const box=$('answers'); box.innerHTML='';
+  fields.forEach((f,i)=>{
+    const d=document.createElement('div'); d.className='field';
+    const s=document.createElement('span'); s.textContent=f.label;
+    const inp=document.createElement('input');
+    inp.type='number'; inp.step='any'; inp.autocomplete='off'; inp.id='ans-'+i;
+    inp.addEventListener('keydown',e=>{
+      if(e.key==='Enter'){
+        const nxt=$('ans-'+(i+1));
+        if(nxt) nxt.focus(); else $('btn-submit').click();
+      }
+    });
+    d.appendChild(s); d.appendChild(inp); box.appendChild(d);
+  });
+}
+
+function nextQuestion(){
+  if(session.qnum>=questionsPerRound){ endRound(); return; }
+  session.qnum++;
+  current=makeProblem(session.op, session.level);
+  current.startedAt=Date.now();
+  const pr=$('problem');
+  pr.className='problem '+(current.cls||'');
+  pr.innerHTML=current.html;
+  renderAnswerFields(current.fields);
+  $('st-student').textContent=student;
+  $('st-level').textContent=session.level;
+  $('st-qnum').textContent=session.qnum+' / '+questionsPerRound;
+  $('st-score').textContent=session.score;
+  $('feedback').textContent=''; $('feedback').className='feedback';
+  $('stars').textContent='\u2B50'.repeat(session.correctStreak);
+  $('btn-submit').disabled=false;
+  $('ans-0').focus();
+  startTimer();
+}
+
+function startTimer(){
+  stopTimer(); timeLeft=timerSeconds; updateTimerUI();
+  timerId=setInterval(()=>{ timeLeft--; updateTimerUI();
+    if(timeLeft<=0){ stopTimer(); evaluate(true); } },1000);
+}
+function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+function updateTimerUI(){
+  const pct=Math.max(0,timeLeft/timerSeconds*100);
+  const bar=$('timer-bar'); bar.style.width=pct+'%';
+  bar.className='timer-bar'+(pct<30?' hurry':'');
+  $('timer-label').textContent=T.secondsLeft[LANG](timeLeft);
+}
+
+function readAnswers(){
+  return current.fields.map((f,i)=>{
+    const v=$('ans-'+i).value.trim();
+    return v===''?null:Number(v);
+  });
+}
+function isCorrect(given){
+  if(given.some(v=>v===null||Number.isNaN(v))) return false;
+  if(current.check) return current.check(given);
+  const want=current.fields.map(f=>f.answer);
+  if(current.anyOrder){
+    const a=[...given].sort((x,y)=>x-y), b=[...want].sort((x,y)=>x-y);
+    return a.every((v,i)=>v===b[i]);
+  }
+  return given.every((v,i)=>v===want[i]);
+}
+function answerString(){
+  if(current.ansText) return current.ansText;
+  if(current.fields.length===1) return String(current.fields[0].answer);
+  return current.fields.map(f=>`${f.label.replace(' =','')} = ${f.answer}`).join(', ');
+}
+
+function evaluate(timedOut){
+  stopTimer();
+  current.fields.forEach((f,i)=>$('ans-'+i).disabled=true);
+  $('btn-submit').disabled=true;
+
+  const given = timedOut ? [] : readAnswers();
+  const correct = !timedOut && isCorrect(given);
+  const secs = Math.round((Date.now()-current.startedAt)/1000);
+  const ansStr = answerString();
+
+  addRecord({
+    time:new Date().toLocaleString(), student,
+    op:TOPICS[session.op].en, level:session.level,
+    problem:current.problemText,
+    given: timedOut ? 'TIMED OUT' : given.join('; '),
+    answer:ansStr,
+    result: correct?'Correct':'Incorrect', seconds:secs
+  });
+
+  const fb=$('feedback');
+  if(correct){
+    session.score++; session.correctStreak++; session.wrongStreak=0;
+    fb.textContent=t('correctFb'); fb.className='feedback ok';
+    playCelebration();
+    speak(SPEAK.correct(student));
+    if(session.correctStreak>=CONFIG.levelUpStreak && session.level<CONFIG.maxLevel){
+      session.level++; session.correctStreak=0;
+      fb.textContent+='  '+T.levelUp[LANG](session.level);
+      speak(SPEAK.levelUp(session.level));
+    }
+  }else{
+    session.wrongStreak++; session.correctStreak=0;
+    fb.textContent = timedOut ? T.timeUpFb[LANG](ansStr) : T.wrongFb[LANG](ansStr);
+    fb.className='feedback bad';
+    playBuzzer();
+    const spokenAns = LANG==='en' ? ansStr.replace('/',' by ') : ansStr;
+    speak(timedOut ? SPEAK.timeUp(student,spokenAns) : SPEAK.wrong(student,spokenAns));
+    if(session.wrongStreak>=CONFIG.levelDownStreak && session.level>CONFIG.minLevel){
+      session.level--; session.wrongStreak=0;
+    }
+  }
+  setLevel(student, session.op, session.level);
+  $('st-score').textContent=session.score;
+  $('stars').textContent='\u2B50'.repeat(session.correctStreak);
+  pendingNext=setTimeout(nextQuestion, CONFIG.feedbackPauseMs);
+}
+
+function endRound(){
+  const pct=Math.round(session.score/questionsPerRound*100);
+  speak(SPEAK.summary(student, session.score, questionsPerRound, pct));
+  $('scores-title').textContent=T.roundDone[LANG](student);
+  $('scores-body').innerHTML=
+    `<div class="problem" style="font-size:2rem">${session.score} / ${questionsPerRound}</div>
+     <div class="note">${T.nowOnLevel[LANG](TOPICS[session.op][LANG], session.level)}</div>`;
+  show('scr-scores');
+}
+
+function showScores(){
+  const rows=loadJSON('mp_records',[]).slice(-25).reverse();
+  let html=`<table><tr><th>${t('when')}</th><th>${t('student')}</th><th>${t('topic')}</th><th>Lv</th><th>?</th><th>${t('answerWord')}</th><th>${t('result')}</th></tr>`;
+  for(const r of rows){
+    html+=`<tr><td>${r.time}</td><td>${r.student}</td><td>${r.op}</td><td>${r.level}</td>
+           <td style="text-align:left">${r.problem}</td><td>${r.given}</td>
+           <td style="color:${r.result==='Correct'?'var(--correct)':'var(--wrong)'}">${r.result}</td></tr>`;
+  }
+  html+=`</table><div class="note">${t('last25')}</div>`;
+  $('scores-title').textContent=t('scoreboard');
+  $('scores-body').innerHTML=rows.length?html:`<div class="note">${t('noScores')}</div>`;
+  show('scr-scores');
+}
+
+/* =====================================================================
+   UI TEXT + MENU BUILD
+   ===================================================================== */
+function buildMenu(){
+  const boxes={arith:$('ops-arith'), num:$('ops-num'), alg:$('ops-alg')};
+  boxes.arith.innerHTML=''; boxes.num.innerHTML=''; boxes.alg.innerHTML='';
+  let i=0;
+  for(const key of Object.keys(TOPICS)){
+    const tp=TOPICS[key];
+    const b=document.createElement('button');
+    b.className='op-btn c'+(i%4); i++;
+    b.innerHTML=`<span class="sym">${tp.sym}</span>${tp[LANG]}<span class="op-level" id="lv-${key}"></span>`;
+    b.onclick=()=>startSession(key);
+    boxes[tp.group].appendChild(b);
+  }
+}
+function refreshLevels(){
+  for(const key of Object.keys(TOPICS)){
+    const el=$('lv-'+key);
+    if(el) el.textContent=t('level')+' '+getLevel(student,key);
+  }
+}
+function applyLang(){
+  $('app-title').textContent=t('title');
+  $('app-sub').textContent=t('subtitle');
+  $('lb-name').textContent=t('askName');
+  $('lb-timer').textContent=t('timerLabel');
+  $('lb-qs').textContent=t('qsLabel');
+  $('btn-start').textContent=t('start');
+  $('nt-storage').textContent=t('storageNote');
+  $('grp-arith').textContent=t('grpArith');
+  $('grp-num').textContent=t('grpNum');
+  $('grp-alg').textContent=t('grpAlg');
+  $('btn-scores').textContent=t('viewScores');
+  $('btn-csv').textContent=t('downloadCSV');
+  $('btn-switch').textContent=t('switchUser');
+  $('btn-submit').textContent=t('check');
+  $('btn-stop').textContent=t('backMenu');
+  $('btn-again').textContent=t('backMenu')+' \u{1F3E0}';
+  $('st-lvword').textContent=t('level');
+  $('st-qword').textContent=t('question');
+  $('st-scword').textContent=t('score');
+  buildMenu();
+  if(student){
+    $('menu-hello').textContent=T.hello[LANG](student);
+    refreshLevels();
+  }
+}
+
+/* =====================================================================
+   WIRING
+   ===================================================================== */
+$('inp-lang').value=LANG;
+$('inp-lang').onchange=e=>{ LANG=e.target.value; localStorage.setItem('mp_lang',LANG); applyLang(); };
+
+$('btn-start').onclick=()=>{
+  const name=$('inp-name').value.trim();
+  if(!name){ alert(t('typeName')); $('inp-name').focus(); return; }
+  student=name;
+  timerSeconds=Math.max(5,Number($('inp-timer').value)||CONFIG.defaultTimerSeconds);
+  questionsPerRound=Math.max(3,Number($('inp-qs').value)||CONFIG.questionsPerRound);
+  ctx();
+  $('menu-hello').textContent=T.hello[LANG](student);
+  refreshLevels();
+  speak(SPEAK.greet(student));
+  show('scr-menu');
+};
+$('inp-name').addEventListener('keydown',e=>{ if(e.key==='Enter') $('btn-start').click(); });
+
+$('btn-submit').onclick=()=>{
+  const given=readAnswers();
+  if(given.every(v=>v===null)) return;   // nothing typed yet
+  evaluate(false);
+};
+$('btn-stop').onclick =()=>{ stopTimer(); clearTimeout(pendingNext); refreshLevels(); show('scr-menu'); };
+$('btn-again').onclick=()=>{ refreshLevels(); show('scr-menu'); };
+$('btn-scores').onclick=showScores;
+$('btn-csv').onclick=downloadCSV;
+$('btn-switch').onclick=()=>{ $('inp-name').value=''; show('scr-name'); $('inp-name').focus(); };
+
+applyLang();
+</script>
+</body>
+</html>
