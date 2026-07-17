@@ -16,7 +16,7 @@ install. Double-click `math_practice_v2.html` and start practising.
 ## Features
 
 - **Eleven practice modules** across three groups:
-  - **Arithmetic** — addition, subtraction, multiplication, division
+  - **Arithmetic** — addition, subtraction, multiplication, division,"BODMAS | 7 + 3 × 4 | → | 3 × (4 + 5) − 12 ÷ 4, incl. the ÷ before × trap".
   - **Fractions, Decimals & Percentages**
   - **Algebra & Geometry** — simple equations, simultaneous equations,
     quadratic equations, and area/volume problems
