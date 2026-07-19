@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ಸ್ಥಾನ ಬೆಲೆ ಕಲಿಕಾ ಸಾಧನ (Place Value Tool)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        .board {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 40px;
+            margin-bottom: 40px;
+            border: 3px solid #34495e;
+        }
+
+        .place-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 140px;
+        }
+
+        .label-kannada {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2980b9;
+            margin-bottom: 5px;
+        }
+
+        .label-english {
+            font-size: 1rem;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* 7-Segment SVG Styling */
+        .segment-display {
+            width: 120px;
+            height: 200px;
+            stroke: #edf2f7;
+            fill: #edf2f7;
+        }
+
+        .seg {
+            transition: fill 0.4s ease, stroke 0.4s ease;
+        }
+
+        /* Active segment glow color */
+        .seg.on {
+            fill: #e74c3c;
+            stroke: #c0392b;
+            filter: drop-shadow(0px 0px 4px rgba(231, 76, 60, 0.6));
+        }
+
+        /* Controls styling */
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .init-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="number"] {
+            width: 80px;
+            padding: 10px;
+            font-size: 1.2rem;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: #2ecc71;
+            color: white;
+            box-shadow: 0 4px 6px rgba(46, 204, 113, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #34495e;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #2c3e50;
+        }
+
+        .btn-big-click {
+            background-color: #e67e22;
+            color: white;
+            font-size: 1.5rem;
+            padding: 20px 40px;
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 6px 0 #d35400;
+        }
+
+        .btn-big-click:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #d35400;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            text-align: center;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>ಸ್ಥಾನ ಬೆಲೆ ಕಲಿಕೆ (Place Value Learning Tool)</h1>
+
+    <div class="board">
+        <!-- HUNDREDS -->
+        <div class="place-column">
+            <div class="label-kannada">ನೂರು</div>
+            <div class="label-english">Hundreds</div>
+            <svg class="segment-display" viewBox="0 0 80 140" id="disp-hundreds">
+                <!-- A --> <polygon id="h-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
+                <!-- B --> <polygon id="h-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
+                <!-- C --> <polygon id="h-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
+                <!-- D --> <polygon id="h-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
+                <!-- E --> <polygon id="h-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
+                <!-- F --> <polygon id="h-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
+                <!-- G --> <polygon id="h-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
+            </svg>
+        </div>
+
+        <!-- TENS -->
+        <div class="place-column">
+            <div class="label-kannada">ಹತ್ತು</div>
+            <div class="label-english">Tens</div>
+            <svg class="segment-display" viewBox="0 0 80 140" id="disp-tens">
+                <!-- A --> <polygon id="t-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
+                <!-- B --> <polygon id="t-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
+                <!-- C --> <polygon id="t-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
+                <!-- D --> <polygon id="t-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
+                <!-- E --> <polygon id="t-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
+                <!-- F --> <polygon id="t-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
+                <!-- G --> <polygon id="t-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
+            </svg>
+        </div>
+
+        <!-- UNITS -->
+        <div class="place-column">
+            <div class="label-kannada">ಬಿಡಿ</div>
+            <div class="label-english">Units</div>
+            <svg class="segment-display" viewBox="0 0 80 140" id="disp-units">
+                <!-- A --> <polygon id="u-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
+                <!-- B --> <polygon id="u-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
+                <!-- C --> <polygon id="u-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
+                <!-- D --> <polygon id="u-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
+                <!-- E --> <polygon id="u-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
+                <!-- F --> <polygon id="u-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
+                <!-- G --> <polygon id="u-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
+            </svg>
+        </div>
+    </div>
+
+    <div class="controls-panel">
+        <button class="btn-big-click" onclick="incrementCount()">+1 ಸೇರಿಸಿ (Add 1)</button>
+        
+        <div class="init-row">
+            <input type="number" id="start-val" min="0" max="999" value="0" placeholder="000">
+            <button class="btn-primary" onclick="initializeValue()">ಪ್ರಾರಂಭಿಸು (Set)</button>
+            <button class="btn-secondary" onclick="resetCounter()">ಮರುಹೊಂದಿಸಿ (Reset)</button>
+        </div>
+    </div>
+
+    <div class="instructions">
+        ಷರತ್ತು: ನಿಮ್ಮ ಕೀಬೋರ್ಡ್‌ನಲ್ಲಿರುವ <strong>Spacebar</strong> ಅಥವಾ <strong>Arrow Up</strong> ಕೀಲಿಯನ್ನು ಒತ್ತುವ ಮೂಲಕವೂ ನೀವು ಸಂಖ್ಯೆಯನ್ನು ಹೆಚ್ಚಿಸಬಹುದು.<br>
+        (Tip: You can also press <strong>Spacebar</strong> or <strong>Up Arrow</strong> on your keyboard to count up.)
+    </div>
+
+    <script>
+        // Map numbers 0-9 to active 7-segment lights [A, B, C, D, E, F, G]
+        const numberMap = {
+            0: [1, 1, 1, 1, 1, 1, 0],
+            1: [0, 1, 1, 0, 0, 0, 0],
+            2: [1, 1, 0, 1, 1, 0, 1],
+            3: [1, 1, 1, 1, 0, 0, 1],
+            4: [0, 1, 1, 0, 0, 1, 1],
+            5: [1, 0, 1, 1, 0, 1, 1],
+            6: [1, 0, 1, 1, 1, 1, 1],
+            7: [1, 1, 1, 0, 0, 0, 0],
+            8: [1, 1, 1, 1, 1, 1, 1],
+            9: [1, 1, 1, 1, 0, 1, 1]
+        };
+
+        const segments = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+        let currentCount = 0;
+
+        function updateDisplay() {
+            // Cap it at 999 max for a 3-digit display
+            if (currentCount > 999) currentCount = 0;
+            if (currentCount < 0) currentCount = 999;
+
+            // Pad number to 3 digits (e.g., 7 becomes "007")
+            const strVal = String(currentCount).padStart(3, '0');
+            
+            const hDigit = parseInt(strVal[0]);
+            const tDigit = parseInt(strVal[1]);
+            const uDigit = parseInt(strVal[2]);
+
+            setDigit('h', hDigit);
+            setDigit('t', tDigit);
+            setDigit('u', uDigit);
+        }
+
+        function setDigit(prefix, digitValue) {
+            const pattern = numberMap[digitValue];
+            segments.forEach((segName, index) => {
+                const element = document.getElementById(`${prefix}-${segName}`);
+                if (pattern[index] === 1) {
+                    element.classList.add('on');
+                } else {
+                    element.classList.remove('on');
+                }
+            });
+        }
+
+        function incrementCount() {
+            currentCount++;
+            updateDisplay();
+        }
+
+        function initializeValue() {
+            const inputVal = parseInt(document.getElementById('start-val').value);
+            if (!isNaN(inputVal) && inputVal >= 0 && inputVal <= 999) {
+                currentCount = inputVal;
+                updateDisplay();
+            } else {
+                alert("ದಯವಿಟ್ಟು 0 ರಿಂದ 999 ರ ನಡುವಿನ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.\nPlease enter a number between 0 and 999.");
+            }
+        }
+
+        function resetCounter() {
+            currentCount = 0;
+            document.getElementById('start-val').value = 0;
+            updateDisplay();
+        }
+
+        // Keyboard event listeners for seamless online teaching flow
+        window.addEventListener('keydown', function(event) {
+            if (event.key === ' ' || event.key === 'ArrowUp') {
+                // Prevent spacebar scrolling page down
+                event.preventDefault(); 
+                incrementCount();
+            }
+        });
+
+        // Run on initial load
+        updateDisplay();
+    </script>
+</body>
+</html>
+
