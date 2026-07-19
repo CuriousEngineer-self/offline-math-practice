@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ಸ್ಥಾನ ಬೆಲೆ ಕಲಿಕಾ ಸಾಧನ (Place Value Tool)</title>
+    <title>೬ ಅಂಕಿಯ ಸ್ಥಾನ ಬೆಲೆ ಕಲಿಕಾ ಸಾಧನ (6-Digit Place Value Tool)</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f4f8;
+            background-color: #f4f7f6;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -27,55 +27,72 @@
 
         .board {
             background: #ffffff;
-            padding: 40px;
+            padding: 30px;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             display: flex;
-            gap: 40px;
+            gap: 15px;
             margin-bottom: 40px;
             border: 3px solid #34495e;
+            justify-content: center;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        /* Group thousands and lakhs according to Indian comma system layout visually */
+        .comma-separator {
+            display: flex;
+            align-items: center;
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #7f8c8d;
+            padding-bottom: 20px;
+            align-self: flex-end;
         }
 
         .place-column {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 140px;
+            width: 110px;
         }
 
         .label-kannada {
-            font-size: 1.8rem;
+            font-size: 1.3rem;
             font-weight: bold;
             color: #2980b9;
             margin-bottom: 5px;
+            white-space: nowrap;
+            text-align: center;
         }
 
         .label-english {
-            font-size: 1rem;
+            font-size: 0.85rem;
             color: #7f8c8d;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         /* 7-Segment SVG Styling */
         .segment-display {
-            width: 120px;
-            height: 200px;
+            width: 95px;
+            height: 160px;
             stroke: #edf2f7;
             fill: #edf2f7;
         }
 
         .seg {
-            transition: fill 0.4s ease, stroke 0.4s ease;
+            transition: fill 0.3s ease, stroke 0.3s ease;
         }
 
         /* Active segment glow color */
         .seg.on {
-            fill: #e74c3c;
-            stroke: #c0392b;
-            filter: drop-shadow(0px 0px 4px rgba(231, 76, 60, 0.6));
+            fill: #2ecc71;
+            stroke: #27ae60;
+            filter: drop-shadow(0px 0px 4px rgba(46, 204, 113, 0.6));
         }
 
         /* Controls styling */
@@ -88,17 +105,19 @@
             padding: 25px;
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 500px;
         }
 
         .init-row {
             display: flex;
             gap: 10px;
-            align-items: center;
+            width: 100%;
         }
 
         input[type="number"] {
-            width: 80px;
-            padding: 10px;
+            flex: 1;
+            padding: 12px;
             font-size: 1.2rem;
             border: 2px solid #bdc3c7;
             border-radius: 8px;
@@ -116,30 +135,28 @@
         }
 
         .btn-primary {
-            background-color: #2ecc71;
+            background-color: #3498db;
             color: white;
-            box-shadow: 0 4px 6px rgba(46, 204, 113, 0.2);
         }
 
         .btn-primary:hover {
-            background-color: #27ae60;
-            transform: translateY(-2px);
+            background-color: #2980b9;
         }
 
         .btn-secondary {
-            background-color: #34495e;
+            background-color: #95a5a6;
             color: white;
         }
 
         .btn-secondary:hover {
-            background-color: #2c3e50;
+            background-color: #7f8c8d;
         }
 
         .btn-big-click {
             background-color: #e67e22;
             color: white;
             font-size: 1.5rem;
-            padding: 20px 40px;
+            padding: 18px 40px;
             width: 100%;
             border-radius: 12px;
             box-shadow: 0 6px 0 #d35400;
@@ -155,58 +172,107 @@
             color: #7f8c8d;
             font-size: 0.95rem;
             text-align: center;
-            max-width: 400px;
+            max-width: 500px;
             line-height: 1.5;
         }
     </style>
 </head>
 <body>
 
-    <h1>ಸ್ಥಾನ ಬೆಲೆ ಕಲಿಕೆ (Place Value Learning Tool)</h1>
+    <h1>೬ ಅಂಕಿಯ ಸ್ಥಾನ ಬೆಲೆ ಕಲಿಕೆ (6-Digit Place Value Tool)</h1>
 
     <div class="board">
-        <!-- HUNDREDS -->
+        <!-- LAKHS (ಲಕ್ಷ) -->
+        <div class="place-column">
+            <div class="label-kannada">ಲಕ್ಷ</div>
+            <div class="label-english">Lakhs</div>
+            <svg class="segment-display" viewBox="0 0 80 140" id="disp-l">
+                <polygon id="l-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
+                <polygon id="l-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
+                <polygon id="l-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
+                <polygon id="l-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
+                <polygon id="l-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
+                <polygon id="l-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
+                <polygon id="l-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
+            </svg>
+        </div>
+
+        <div class="comma-separator">,</div>
+
+        <!-- TEN THOUSANDS (ಹತ್ತು ಸಾವಿರ) -->
+        <div class="place-column">
+            <div class="label-kannada">ಹತ್ತು ಸಾವಿರ</div>
+            <div class="label-english">Ten Th.</div>
+            <svg class="segment-display" viewBox="0 0 80 140" id="disp-tt">
+                <polygon id="tt-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
+                <polygon id="tt-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
+                <polygon id="tt-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
+                <polygon id="tt-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
+                <polygon id="tt-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
+                <polygon id="tt-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
+                <polygon id="tt-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
+            </svg>
+        </div>
+
+        <!-- THOUSANDS (ಸಾಹಸ್ರ) -->
+        <div class="place-column">
+            <div class="label-kannada">ಸಾವಿರ</div>
+            <div class="label-english">Thousands</div>
+            <svg class="segment-display" viewBox="0 0 80 140" id="disp-t">
+                <polygon id="t-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
+                <polygon id="t-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
+                <polygon id="t-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
+                <polygon id="t-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
+                <polygon id="t-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
+                <polygon id="t-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
+                <polygon id="t-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
+            </svg>
+        </div>
+
+        <div class="comma-separator">,</div>
+
+        <!-- HUNDREDS (ನೂರು) -->
         <div class="place-column">
             <div class="label-kannada">ನೂರು</div>
             <div class="label-english">Hundreds</div>
-            <svg class="segment-display" viewBox="0 0 80 140" id="disp-hundreds">
-                <!-- A --> <polygon id="h-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
-                <!-- B --> <polygon id="h-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
-                <!-- C --> <polygon id="h-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
-                <!-- D --> <polygon id="h-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
-                <!-- E --> <polygon id="h-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
-                <!-- F --> <polygon id="h-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
-                <!-- G --> <polygon id="h-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
+            <svg class="segment-display" viewBox="0 0 80 140" id="disp-h">
+                <polygon id="h-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
+                <polygon id="h-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
+                <polygon id="h-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
+                <polygon id="h-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
+                <polygon id="h-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
+                <polygon id="h-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
+                <polygon id="h-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
             </svg>
         </div>
 
-        <!-- TENS -->
+        <!-- TENS (ಹತ್ತು) -->
         <div class="place-column">
             <div class="label-kannada">ಹತ್ತು</div>
             <div class="label-english">Tens</div>
-            <svg class="segment-display" viewBox="0 0 80 140" id="disp-tens">
-                <!-- A --> <polygon id="t-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
-                <!-- B --> <polygon id="t-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
-                <!-- C --> <polygon id="t-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
-                <!-- D --> <polygon id="t-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
-                <!-- E --> <polygon id="t-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
-                <!-- F --> <polygon id="t-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
-                <!-- G --> <polygon id="t-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
+            <svg class="segment-display" viewBox="0 0 80 140" id="disp-ten">
+                <polygon id="ten-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
+                <polygon id="ten-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
+                <polygon id="ten-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
+                <polygon id="ten-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
+                <polygon id="ten-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
+                <polygon id="ten-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
+                <polygon id="ten-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
             </svg>
         </div>
 
-        <!-- UNITS -->
+        <!-- UNITS (ಬಿಡಿ) -->
         <div class="place-column">
             <div class="label-kannada">ಬಿಡಿ</div>
             <div class="label-english">Units</div>
-            <svg class="segment-display" viewBox="0 0 80 140" id="disp-units">
-                <!-- A --> <polygon id="u-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
-                <!-- B --> <polygon id="u-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
-                <!-- C --> <polygon id="u-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
-                <!-- D --> <polygon id="u-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
-                <!-- E --> <polygon id="u-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
-                <!-- F --> <polygon id="u-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
-                <!-- G --> <polygon id="u-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
+            <svg class="segment-display" viewBox="0 0 80 140" id="disp-u">
+                <polygon id="u-a" class="seg" points="10 10,  16 4,  64 4,  70 10, 58 16, 22 16" />
+                <polygon id="u-b" class="seg" points="70 10, 76 16, 76 64, 70 70, 64 58, 64 22" />
+                <polygon id="u-c" class="seg" points="70 70, 76 76, 76 124,70 130,64 118,64 82" />
+                <polygon id="u-d" class="seg" points="70 130,64 136,16 136,10 130,22 124,58 124" />
+                <polygon id="u-e" class="seg" points="10 130, 4 124, 4 76,  10 70, 16 82,  16 118" />
+                <polygon id="u-f" class="seg" points="10 70,  4 64,  4 16,  10 10, 16 22,  16 58" />
+                <polygon id="u-g" class="seg" points="10 70,  19 64, 61 64, 70 70, 58 76,  22 76" />
             </svg>
         </div>
     </div>
@@ -215,7 +281,7 @@
         <button class="btn-big-click" onclick="incrementCount()">+1 ಸೇರಿಸಿ (Add 1)</button>
         
         <div class="init-row">
-            <input type="number" id="start-val" min="0" max="999" value="0" placeholder="000">
+            <input type="number" id="start-val" min="0" max="999999" value="0" placeholder="000000">
             <button class="btn-primary" onclick="initializeValue()">ಪ್ರಾರಂಭಿಸು (Set)</button>
             <button class="btn-secondary" onclick="resetCounter()">ಮರುಹೊಂದಿಸಿ (Reset)</button>
         </div>
@@ -223,11 +289,10 @@
 
     <div class="instructions">
         ಷರತ್ತು: ನಿಮ್ಮ ಕೀಬೋರ್ಡ್‌ನಲ್ಲಿರುವ <strong>Spacebar</strong> ಅಥವಾ <strong>Arrow Up</strong> ಕೀಲಿಯನ್ನು ಒತ್ತುವ ಮೂಲಕವೂ ನೀವು ಸಂಖ್ಯೆಯನ್ನು ಹೆಚ್ಚಿಸಬಹುದು.<br>
-        (Tip: You can also press <strong>Spacebar</strong> or <strong>Up Arrow</strong> on your keyboard to count up.)
+        (Tip: You can also press <strong>Spacebar</strong> or <strong>Up Arrow</strong> to count up.)
     </div>
 
     <script>
-        // Map numbers 0-9 to active 7-segment lights [A, B, C, D, E, F, G]
         const numberMap = {
             0: [1, 1, 1, 1, 1, 1, 0],
             1: [0, 1, 1, 0, 0, 0, 0],
@@ -245,20 +310,18 @@
         let currentCount = 0;
 
         function updateDisplay() {
-            // Cap it at 999 max for a 3-digit display
-            if (currentCount > 999) currentCount = 0;
-            if (currentCount < 0) currentCount = 999;
+            if (currentCount > 999999) currentCount = 0;
+            if (currentCount < 0) currentCount = 999999;
 
-            // Pad number to 3 digits (e.g., 7 becomes "007")
-            const strVal = String(currentCount).padStart(3, '0');
+            // Pad number to 6 digits (e.g., 450 becomes "000450")
+            const strVal = String(currentCount).padStart(6, '0');
             
-            const hDigit = parseInt(strVal[0]);
-            const tDigit = parseInt(strVal[1]);
-            const uDigit = parseInt(strVal[2]);
-
-            setDigit('h', hDigit);
-            setDigit('t', tDigit);
-            setDigit('u', uDigit);
+            setDigit('l',   parseInt(strVal[0])); // Lakhs
+            setDigit('tt',  parseInt(strVal[1])); // Ten Thousands
+            setDigit('t',   parseInt(strVal[2])); // Thousands
+            setDigit('h',   parseInt(strVal[3])); // Hundreds
+            setDigit('ten', parseInt(strVal[4])); // Tens
+            setDigit('u',   parseInt(strVal[5])); // Units
         }
 
         function setDigit(prefix, digitValue) {
@@ -280,11 +343,11 @@
 
         function initializeValue() {
             const inputVal = parseInt(document.getElementById('start-val').value);
-            if (!isNaN(inputVal) && inputVal >= 0 && inputVal <= 999) {
+            if (!isNaN(inputVal) && inputVal >= 0 && inputVal <= 999999) {
                 currentCount = inputVal;
                 updateDisplay();
             } else {
-                alert("ದಯವಿಟ್ಟು 0 ರಿಂದ 999 ರ ನಡುವಿನ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.\nPlease enter a number between 0 and 999.");
+                alert("ದಯವಿಟ್ಟು 0 ರಿಂದ 999999 ರ ನಡುವಿನ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.\nPlease enter a number between 0 and 999999.");
             }
         }
 
@@ -294,10 +357,8 @@
             updateDisplay();
         }
 
-        // Keyboard event listeners for seamless online teaching flow
         window.addEventListener('keydown', function(event) {
             if (event.key === ' ' || event.key === 'ArrowUp') {
-                // Prevent spacebar scrolling page down
                 event.preventDefault(); 
                 incrementCount();
             }
