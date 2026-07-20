@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Line Playground — ಸಂಖ್ಯಾ ರೇಖೆಯ ಮೈದಾನ</title>
+<style>
+  :root{
+    --board:#1f4237; --board-dark:#173428;
+    --frame:#8a5a33; --frame-dark:#6e4523;
+    --chalk:#f6f3e8; --chalk-dim:#cfd8cd;
+    --chalk-yellow:#ffd95e; --chalk-pink:#ff9d9d; --chalk-blue:#9dd6ff;
+    --correct:#7fe08a; --wrong:#ff8a7a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--frame);
+    background-image:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.07) 0 2px, transparent 2px 90px),
+      linear-gradient(var(--frame), var(--frame-dark));
+    font-family:'Comic Sans MS','Chalkboard SE','Segoe Print','Nirmala UI','Tunga',sans-serif;
+    color:var(--chalk);
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:18px;
+  }
+  .board{
+    width:100%;max-width:900px;
+    background:var(--board);
+    background-image:radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.05), transparent 60%),
+                     radial-gradient(ellipse at 80% 80%, rgba(0,0,0,.15), transparent 60%);
+    border:14px solid var(--frame-dark);
+    border-radius:14px;
+    box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 0 60px rgba(0,0,0,.35);
+    padding:24px 28px 26px;
+  }
+  header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  h1{font-size:1.55rem;color:var(--chalk-yellow);text-shadow:0 0 6px rgba(255,217,94,.35)}
+  select{
+    padding:8px 12px;font:inherit;background:rgba(255,255,255,.08);
+    border:2px dashed var(--chalk-dim);border-radius:10px;color:var(--chalk);outline:none;
+  }
+  select option{color:#222}
+  nav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 6px}
+  .tab{
+    font:inherit;cursor:pointer;border:none;border-radius:12px 12px 0 0;
+    padding:10px 14px;font-size:.95rem;color:var(--chalk-dim);
+    background:rgba(255,255,255,.07);
+  }
+  .tab.active{color:var(--board-dark);background:var(--chalk-yellow);font-weight:bold}
+  .lesson{display:none;border-top:2px dashed rgba(255,255,255,.25);padding-top:16px}
+  .lesson.active{display:block;animation:fadein .3s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .intro{color:var(--chalk-blue);font-size:1.02rem;margin-bottom:12px;line-height:1.5}
+  .stage{background:rgba(0,0,0,.15);border-radius:12px;padding:8px 4px;margin:8px 0}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:12px}
+  .controls label{color:var(--chalk-blue)}
+  input[type=number]{
+    width:86px;padding:8px;font:inherit;font-size:1.15rem;text-align:center;
+    background:rgba(255,255,255,.08);border:2px dashed var(--chalk-dim);
+    border-radius:10px;color:var(--chalk);outline:none;
+  }
+  input:focus{border-color:var(--chalk-yellow)}
+  button{
+    font:inherit;cursor:pointer;border:none;border-radius:12px;
+    padding:10px 16px;font-size:1rem;color:var(--board-dark);
+    background:var(--chalk-yellow);box-shadow:0 3px 0 rgba(0,0,0,.3);
+    transition:transform .08s ease;
+  }
+  button:hover{transform:translateY(-2px)}
+  button:active{transform:translateY(1px)}
+  button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  button.blue{background:var(--chalk-blue)}
+  button.pink{background:var(--chalk-pink)}
+  button.green{background:var(--correct)}
+  .opsel{display:flex;gap:6px}
+  .opsel button{padding:8px 14px;font-size:1.2rem}
+  .opsel button.on{outline:3px solid var(--chalk);outline-offset:2px}
+  .explain{
+    text-align:center;min-height:1.7rem;margin-top:10px;font-size:1.1rem;color:var(--chalk-yellow);
+    line-height:1.5;
+  }
+  .result{text-align:center;font-size:1.6rem;min-height:2.2rem;margin-top:4px}
+  .result.ok{color:var(--correct)}
+  .msg-bad{color:var(--wrong)}
+  .bigidea{
+    margin-top:16px;padding:12px 16px;border:2px dashed var(--chalk-yellow);
+    border-radius:12px;color:var(--chalk-yellow);font-size:1.02rem;line-height:1.5
+  }
+  details{margin-top:14px;font-size:.85rem;color:var(--chalk-dim)}
+  details summary{cursor:pointer;color:var(--chalk-blue)}
+  details p{margin:8px 0 0;line-height:1.5}
+  .bonus-tag{
+    display:inline-block;background:var(--chalk-pink);color:var(--board-dark);
+    font-size:.7rem;border-radius:8px;padding:2px 8px;vertical-align:middle;margin-left:6px;
+  }
+  svg{display:block;width:100%}
+  svg text{font-family:inherit}
+  @media (max-width:560px){ h1{font-size:1.2rem} .intro{font-size:.92rem} }
+</style>
+</head>
+<body>
+<div class="board">
+  <header>
+    <h1 id="title"></h1>
+    <select id="lang">
+      <option value="en">English</option>
+      <option value="kn">ಕನ್ನಡ (Kannada)</option>
+    </select>
+  </header>
+
+  <nav>
+    <button class="tab active" data-l="0" id="tab0"></button>
+    <button class="tab" data-l="1" id="tab1"></button>
+    <button class="tab" data-l="2" id="tab2"></button>
+    <button class="tab" data-l="3" id="tab3"></button>
+  </nav>
+
+  <!-- ===== LESSON 1 : WALKING (+ and −) ===== -->
+  <section class="lesson active" id="lesson0">
+    <div class="intro" id="l0-intro"></div>
+    <div class="stage"><svg id="l0-svg" viewBox="0 0 760 170" height="170"></svg></div>
+    <div class="controls">
+      <input type="number" id="l0-a" value="3" min="-9" max="9">
+      <span class="opsel">
+        <button id="l0-plus" class="green on">+</button>
+        <button id="l0-minus" class="pink">−</button>
+      </span>
+      <input type="number" id="l0-b" value="5" min="-9" max="9">
+      <button id="l0-go" class="blue"></button>
+    </div>
+    <div class="explain" id="l0-explain"></div>
+    <div class="result" id="l0-result"></div>
+    <div class="bigidea" id="l0-idea"></div>
+    <details><summary id="l0-tn"></summary><p id="l0-tnp"></p></details>
+  </section>
+
+  <!-- ===== LESSON 2 : JUMPS (×) ===== -->
+  <section class="lesson" id="lesson1">
+    <div class="intro" id="l1-intro"></div>
+    <div class="stage"><svg id="l1-svg" viewBox="0 0 760 190" height="190"></svg></div>
+    <div class="controls">
+      <input type="number" id="l1-a" value="3" min="-4" max="4">
+      <span style="font-size:1.3rem">×</span>
+      <input type="number" id="l1-b" value="4" min="-4" max="4">
+      <button id="l1-go" class="blue"></button>
+    </div>
+    <div class="explain" id="l1-explain"></div>
+    <div class="result" id="l1-result"></div>
+    <div class="bigidea" id="l1-idea"></div>
+    <details><summary id="l1-tn"></summary><p id="l1-tnp"></p></details>
+  </section>
+
+  <!-- ===== LESSON 3 : THE TURN (minus × minus) ===== -->
+  <section class="lesson" id="lesson2">
+    <div class="intro" id="l2-intro"></div>
+    <div class="stage"><svg id="l2-svg" viewBox="0 0 760 320" height="320"></svg></div>
+    <div class="controls">
+      <input type="number" id="l2-a" value="-3" min="-5" max="5">
+      <span style="font-size:1.3rem">×</span>
+      <input type="number" id="l2-b" value="-2" min="-5" max="5">
+      <button id="l2-go" class="blue"></button>
+    </div>
+    <div class="explain" id="l2-explain"></div>
+    <div class="result" id="l2-result"></div>
+    <div class="bigidea" id="l2-idea"></div>
+    <details><summary id="l2-tn"></summary><p id="l2-tnp"></p></details>
+  </section>
+
+  <!-- ===== LESSON 4 : QUARTER TURN (bonus: i) ===== -->
+  <section class="lesson" id="lesson3">
+    <div class="intro" id="l3-intro"></div>
+    <div class="stage"><svg id="l3-svg" viewBox="0 0 760 320" height="320"></svg></div>
+    <div class="controls">
+      <button id="l3-i" class="pink"></button>
+      <button id="l3-neg" class="blue"></button>
+      <button id="l3-reset"></button>
+    </div>
+    <div class="explain" id="l3-explain"></div>
+    <div class="result" id="l3-result"></div>
+    <div class="bigidea" id="l3-idea"></div>
+    <details><summary id="l3-tn"></summary><p id="l3-tnp"></p></details>
+  </section>
+</div>
+
+<script>
+/* =====================================================================
+   LANGUAGE PACK — plain text; teachers, please correct the Kannada!
+   ===================================================================== */
+const S = {
+  title :{en:'✨ Number Line Playground ✨', kn:'✨ ಸಂಖ್ಯಾ ರೇಖೆಯ ಮೈದಾನ ✨'},
+  tab0  :{en:'1. Walking: + and −',  kn:'1. ನಡಿಗೆ: + ಮತ್ತು −'},
+  tab1  :{en:'2. Jumps: ×',          kn:'2. ಜಿಗಿತಗಳು: ×'},
+  tab2  :{en:'3. The Turn: (−)×(−)', kn:'3. ತಿರುವು: (−)×(−)'},
+  tab3  :{en:'4. Quarter Turn ⭐',    kn:'4. ಕಾಲು ತಿರುವು ⭐'},
+  go    :{en:'Go! 🐇',               kn:'ನಡೆ! 🐇'},
+  jump  :{en:'Jump! 🐸',             kn:'ಜಿಗಿ! 🐸'},
+  turn  :{en:'Show me! 🔄',          kn:'ತೋರಿಸು! 🔄'},
+  reset :{en:'Reset',                kn:'ಮರುಹೊಂದಿಸಿ'},
+  tooBig:{en:'⚠ Too big for our number line! Keep the answer between −12 and 12.',
+          kn:'⚠ ನಮ್ಮ ಸಂಖ್ಯಾ ರೇಖೆಗೆ ತುಂಬಾ ದೊಡ್ಡದು! ಉತ್ತರ −12 ಮತ್ತು 12 ರ ನಡುವೆ ಇರಲಿ.'},
+  tooBig10:{en:'⚠ Keep the product between −10 and 10 for this lesson.',
+          kn:'⚠ ಈ ಪಾಠಕ್ಕೆ ಗುಣಲಬ್ಧ −10 ಮತ್ತು 10 ರ ನಡುವೆ ಇರಲಿ.'},
+  zero  :{en:'⚠ Please use numbers other than 0 here.',
+          kn:'⚠ ಇಲ್ಲಿ 0 ಬಿಟ್ಟು ಬೇರೆ ಸಂಖ್ಯೆ ಬಳಸಿ.'},
+
+  l0intro:{en:'The number line is a road. Zero is home; numbers to the right are positive, to the left negative. ADDING means walking forward (right). SUBTRACTING means turning around first!',
+           kn:'ಸಂಖ್ಯಾ ರೇಖೆ ಒಂದು ರಸ್ತೆ. ಸೊನ್ನೆ ಮನೆ; ಬಲಕ್ಕೆ ಧನ ಸಂಖ್ಯೆಗಳು, ಎಡಕ್ಕೆ ಋಣ ಸಂಖ್ಯೆಗಳು. ಕೂಡುವುದು ಎಂದರೆ ಮುಂದೆ (ಬಲಕ್ಕೆ) ನಡೆಯುವುದು. ಕಳೆಯುವುದು ಎಂದರೆ ಮೊದಲು ಹಿಂತಿರುಗುವುದು!'},
+  l0e_addPos:{en:(a,b)=>`Start at ${a}. Add ${b}: walk ${b} steps RIGHT →`,
+           kn:(a,b)=>`${a} ರಿಂದ ಪ್ರಾರಂಭಿಸಿ. ${b} ಕೂಡಿಸಿ: ${b} ಹೆಜ್ಜೆ ಬಲಕ್ಕೆ ನಡೆಯಿರಿ →`},
+  l0e_addNeg:{en:(a,b)=>`Start at ${a}. Adding ${b} (a negative!): walk ${-b} steps LEFT ←`,
+           kn:(a,b)=>`${a} ರಿಂದ ಪ್ರಾರಂಭಿಸಿ. ${b} ಕೂಡಿಸುವುದು (ಋಣ!): ${-b} ಹೆಜ್ಜೆ ಎಡಕ್ಕೆ ನಡೆಯಿರಿ ←`},
+  l0e_subPos:{en:(a,b)=>`Start at ${a}. Subtract ${b}: turn around — walk ${b} steps LEFT ←`,
+           kn:(a,b)=>`${a} ರಿಂದ ಪ್ರಾರಂಭಿಸಿ. ${b} ಕಳೆಯಿರಿ: ಹಿಂತಿರುಗಿ — ${b} ಹೆಜ್ಜೆ ಎಡಕ್ಕೆ ನಡೆಯಿರಿ ←`},
+  l0e_subNeg:{en:(a,b)=>`Start at ${a}. Subtracting ${b}: turn around TWICE — walk ${-b} steps RIGHT →`,
+           kn:(a,b)=>`${a} ರಿಂದ ಪ್ರಾರಂಭಿಸಿ. ${b} ಕಳೆಯುವುದು: ಎರಡು ಬಾರಿ ಹಿಂತಿರುಗಿ — ${-b} ಹೆಜ್ಜೆ ಬಲಕ್ಕೆ ನಡೆಯಿರಿ →`},
+  l0idea:{en:'💡 Big idea: adding walks you right, subtracting turns you around. Negative numbers are simply places to the left of home — nothing scary!',
+          kn:'💡 ದೊಡ್ಡ ವಿಚಾರ: ಕೂಡುವುದು ಬಲಕ್ಕೆ ನಡೆಸುತ್ತದೆ, ಕಳೆಯುವುದು ಹಿಂತಿರುಗಿಸುತ್ತದೆ. ಋಣ ಸಂಖ್ಯೆಗಳು ಮನೆಯ ಎಡಗಡೆಯ ಸ್ಥಳಗಳು ಅಷ್ಟೇ — ಹೆದರುವ ಅಗತ್ಯವಿಲ್ಲ!'},
+
+  l1intro:{en:'Multiplication is repeated jumping! The FIRST number counts the jumps; the SECOND gives each jump\u2019s size and direction. 3 × 4 means: from 0, take 3 jumps of size 4.',
+           kn:'ಗುಣಾಕಾರ ಎಂದರೆ ಪುನರಾವರ್ತಿತ ಜಿಗಿತ! ಮೊದಲ ಸಂಖ್ಯೆ ಜಿಗಿತಗಳನ್ನು ಎಣಿಸುತ್ತದೆ; ಎರಡನೆಯದು ಪ್ರತಿ ಜಿಗಿತದ ಗಾತ್ರ ಮತ್ತು ದಿಕ್ಕು. 3 × 4 ಎಂದರೆ: 0 ಯಿಂದ, 4 ಗಾತ್ರದ 3 ಜಿಗಿತ.'},
+  l1e_pp:{en:(a,b)=>`${a} jumps of +${b}: jumping RIGHT →`,
+          kn:(a,b)=>`+${b} ನ ${a} ಜಿಗಿತಗಳು: ಬಲಕ್ಕೆ ಜಿಗಿಯಿರಿ →`},
+  l1e_pn:{en:(a,b)=>`${a} jumps of ${b}: jumping LEFT ←`,
+          kn:(a,b)=>`${b} ನ ${a} ಜಿಗಿತಗಳು: ಎಡಕ್ಕೆ ಜಿಗಿಯಿರಿ ←`},
+  l1e_np:{en:(a,b)=>`${a} jumps? A negative count means: do the OPPOSITE of ${-a} jumps of +${b} — so jump LEFT ←`,
+          kn:(a,b)=>`${a} ಜಿಗಿತ? ಋಣ ಎಣಿಕೆ ಎಂದರೆ: +${b} ನ ${-a} ಜಿಗಿತದ ವಿರುದ್ಧ ಮಾಡಿ — ಎಡಕ್ಕೆ ಜಿಗಿಯಿರಿ ←`},
+  l1e_nn:{en:(a,b)=>`The OPPOSITE of ${-a} jumps of ${b} (left) — so jump RIGHT →! Strange? Lesson 3 shows the real secret…`,
+          kn:(a,b)=>`${b} ನ ${-a} ಜಿಗಿತದ (ಎಡ) ವಿರುದ್ಧ — ಬಲಕ್ಕೆ ಜಿಗಿಯಿರಿ →! ವಿಚಿತ್ರವೇ? ಪಾಠ 3 ನಿಜವಾದ ರಹಸ್ಯ ತೋರಿಸುತ್ತದೆ…`},
+  l1idea:{en:'💡 Big idea: × means repeated jumps. A negative jump size points left; a negative jump count means “do the opposite”.',
+          kn:'💡 ದೊಡ್ಡ ವಿಚಾರ: × ಎಂದರೆ ಪುನರಾವರ್ತಿತ ಜಿಗಿತ. ಋಣ ಗಾತ್ರ ಎಡಕ್ಕೆ; ಋಣ ಎಣಿಕೆ ಎಂದರೆ “ವಿರುದ್ಧ ಮಾಡಿ”.'},
+
+  l2intro:{en:'Here is the REAL secret of minus × minus. Think of a number as an arrow from 0. Multiplying by −1 does not move the arrow — it TURNS it half way around (180°). Watch what two minus signs do!',
+           kn:'ಇದೋ (−)×(−) ನ ನಿಜವಾದ ರಹಸ್ಯ. ಸಂಖ್ಯೆಯನ್ನು 0 ಯಿಂದ ಹೊರಡುವ ಬಾಣ ಎಂದು ಭಾವಿಸಿ. −1 ರಿಂದ ಗುಣಿಸಿದರೆ ಬಾಣ ಚಲಿಸುವುದಿಲ್ಲ — ಅದು ಅರ್ಧ ಸುತ್ತು (180°) ತಿರುಗುತ್ತದೆ. ಎರಡು ಋಣ ಚಿಹ್ನೆಗಳು ಏನು ಮಾಡುತ್ತವೆ ನೋಡಿ!'},
+  l2step0:{en:(m)=>`Step 1: the size is ${m}. Arrow points to +${m}.`,
+           kn:(m)=>`ಹಂತ 1: ಗಾತ್ರ ${m}. ಬಾಣ +${m} ಕಡೆ ತೋರಿಸುತ್ತದೆ.`},
+  l2turn1:{en:'One minus sign: HALF TURN! 🔄',
+           kn:'ಒಂದು ಋಣ ಚಿಹ್ನೆ: ಅರ್ಧ ಸುತ್ತು! 🔄'},
+  l2turn2:{en:'Second minus sign: ANOTHER half turn — a full circle, back to plus! 🔄🔄',
+           kn:'ಎರಡನೇ ಋಣ ಚಿಹ್ನೆ: ಮತ್ತೊಂದು ಅರ್ಧ ಸುತ್ತು — ಪೂರ್ಣ ಸುತ್ತು, ಮತ್ತೆ ಧನಕ್ಕೆ! 🔄🔄'},
+  l2none :{en:'No minus signs — no turns needed!',
+           kn:'ಋಣ ಚಿಹ್ನೆ ಇಲ್ಲ — ತಿರುವು ಬೇಡ!'},
+  l2idea:{en:'💡 Big idea: every minus sign is a half-turn. TWO half-turns = one full turn = facing plus again. That is why (−) × (−) = (+)!',
+          kn:'💡 ದೊಡ್ಡ ವಿಚಾರ: ಪ್ರತಿ ಋಣ ಚಿಹ್ನೆ ಒಂದು ಅರ್ಧ ಸುತ್ತು. ಎರಡು ಅರ್ಧ ಸುತ್ತು = ಒಂದು ಪೂರ್ಣ ಸುತ್ತು = ಮತ್ತೆ ಧನ ದಿಕ್ಕು. ಅದಕ್ಕೇ (−) × (−) = (+)!'},
+
+  l3intro:{en:'A peek at a beautiful secret of higher mathematics! If × (−1) is a HALF turn… is there a number that turns you a QUARTER turn (90°)? Doing it twice must equal × (−1). Mathematicians call it i — and it lives ABOVE the number line!',
+           kn:'ಉನ್ನತ ಗಣಿತದ ಸುಂದರ ರಹಸ್ಯದ ಇಣುಕು ನೋಟ! × (−1) ಅರ್ಧ ಸುತ್ತಾದರೆ… ಕಾಲು ಸುತ್ತು (90°) ತಿರುಗಿಸುವ ಸಂಖ್ಯೆ ಇದೆಯೇ? ಅದನ್ನು ಎರಡು ಬಾರಿ ಮಾಡಿದರೆ × (−1) ಆಗಬೇಕು. ಗಣಿತಜ್ಞರು ಅದನ್ನು i ಎನ್ನುತ್ತಾರೆ — ಅದು ಸಂಖ್ಯಾ ರೇಖೆಯ ಮೇಲೆ ವಾಸಿಸುತ್ತದೆ!'},
+  l3xi   :{en:'× i (quarter turn)',  kn:'× i (ಕಾಲು ಸುತ್ತು)'},
+  l3xneg :{en:'× (−1) (half turn)',  kn:'× (−1) (ಅರ್ಧ ಸುತ್ತು)'},
+  l3magic:{en:'✨ i × i took 3 to −3… so i × i = −1! A number whose square is negative!',
+           kn:'✨ i × i ಯು 3 ಅನ್ನು −3 ಗೆ ಒಯ್ದಿತು… ಅಂದರೆ i × i = −1! ವರ್ಗವು ಋಣವಾಗಿರುವ ಸಂಖ್ಯೆ!'},
+  l3idea:{en:'💡 Big idea: −1 is a half-turn, i is a quarter-turn, so i² = −1. Numbers do not just live on a line — they fill a whole plane. You have just peeked at “complex numbers”, which run electric circuits, radio waves and much more!',
+          kn:'💡 ದೊಡ್ಡ ವಿಚಾರ: −1 ಅರ್ಧ ಸುತ್ತು, i ಕಾಲು ಸುತ್ತು, ಆದ್ದರಿಂದ i² = −1. ಸಂಖ್ಯೆಗಳು ರೇಖೆಯಲ್ಲಷ್ಟೇ ಅಲ್ಲ — ಇಡೀ ಸಮತಲವನ್ನು ತುಂಬುತ್ತವೆ. ನೀವು ಈಗ “ಸಂಕೀರ್ಣ ಸಂಖ್ಯೆಗಳ” ಇಣುಕು ನೋಟ ಪಡೆದಿರಿ — ಅವು ವಿದ್ಯುತ್ ಮಂಡಲ, ರೇಡಿಯೊ ತರಂಗ ಇತ್ಯಾದಿ ನಡೆಸುತ್ತವೆ!'},
+
+  teacherNote:{en:'📖 For the teacher', kn:'📖 ಶಿಕ್ಷಕರಿಗೆ'},
+  tn0:{en:'Act it out physically first! Draw a chalk line on the floor, have a student BE the walker. “Subtract = turn around” is the key phrase — it makes 3 − (−2) (“turn around twice”) completely natural later. Then replay the same sums here.',
+       kn:'Act it out physically first! Draw a chalk line on the floor, have a student BE the walker. “Subtract = turn around” is the key phrase — it makes 3 − (−2) (“turn around twice”) completely natural later. Then replay the same sums here.'},
+  tn1:{en:'Do 3×4 and 4×3 and let students notice both land at 12 (different jumps, same landing!). The (−3)×(−4) case works here but feels like a verbal trick — say so honestly, and promise the real picture in Lesson 3.',
+       kn:'Do 3×4 and 4×3 and let students notice both land at 12 (different jumps, same landing!). The (−3)×(−4) case works here but feels like a verbal trick — say so honestly, and promise the real picture in Lesson 3.'},
+  tn2:{en:'Run the four sign cases in order: (+)(+), (+)(−), (−)(+), (−)(−). Count the half-turns aloud together. The moment two turns bring the arrow home is the whole lesson — pause there and let it sink in.',
+       kn:'Run the four sign cases in order: (+)(+), (+)(−), (−)(+), (−)(−). Count the half-turns aloud together. The moment two turns bring the arrow home is the whole lesson — pause there and let it sink in.'},
+  tn3:{en:'OPTIONAL — a wonder lesson, not syllabus. Best for curious or older students after Lesson 3 has fully landed. Press × i slowly four times: 3 → 3i → −3 → −3i → 3, a full circle in four quarter-turns. The only takeaway needed: “there exists a number whose square is −1, and it lives off the line.” Planting that seed early is a gift.',
+       kn:'OPTIONAL — a wonder lesson, not syllabus. Best for curious or older students after Lesson 3 has fully landed. Press × i slowly four times: 3 → 3i → −3 → −3i → 3, a full circle in four quarter-turns. The only takeaway needed: “there exists a number whose square is −1, and it lives off the line.” Planting that seed early is a gift.'}
+};
+
+let LANG = localStorage.getItem('mp_lang') || 'en';
+const $=id=>document.getElementById(id);
+const s=k=>S[k][LANG];
+
+/* ---- sounds ---- */
+let AC=null;
+function ac(){if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC;}
+function tone(f,st,d,type,vol){const c=ac(),o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(.0001,c.currentTime+st);
+  g.gain.linearRampToValueAtTime(vol,c.currentTime+st+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+st+d);
+  o.connect(g).connect(c.destination);o.start(c.currentTime+st);o.stop(c.currentTime+st+d+.05);}
+const chime=()=>{[523,659,784,1047].forEach((f,i)=>tone(f,i*.12,.3,'triangle',.22));};
+const tick =()=>tone(950,0,.07,'square',.10);
+const whoosh=()=>tone(300,0,.5,'sine',.12);
+
+/* ---- animation helpers ---- */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function tween(dur,cb){return new Promise(res=>{
+  const t0=performance.now();
+  function f(t){const p=Math.min(1,(t-t0)/dur);cb(p);if(p<1)requestAnimationFrame(f);else res();}
+  requestAnimationFrame(f);
+});}
+
+/* ---- number line drawing (lessons 1 & 2) ---- */
+function drawLine(svg, baseline, min, max, unit, cx){
+  let g=`<line x1="${cx+min*unit}" y1="${baseline}" x2="${cx+max*unit}" y2="${baseline}" stroke="var(--chalk)" stroke-width="3"/>`;
+  g+=`<polygon points="${cx+max*unit+12},${baseline} ${cx+max*unit},${baseline-6} ${cx+max*unit},${baseline+6}" fill="var(--chalk)"/>`;
+  g+=`<polygon points="${cx+min*unit-12},${baseline} ${cx+min*unit},${baseline-6} ${cx+min*unit},${baseline+6}" fill="var(--chalk)"/>`;
+  for(let v=min;v<=max;v++){
+    const x=cx+v*unit;
+    g+=`<line x1="${x}" y1="${baseline-6}" x2="${x}" y2="${baseline+6}" stroke="var(--chalk-dim)" stroke-width="${v===0?3:1.5}"/>`;
+    g+=`<text x="${x}" y="${baseline+22}" font-size="12" text-anchor="middle" fill="${v===0?'var(--chalk-yellow)':'var(--chalk-dim)'}">${v}</text>`;
+  }
+  return g;
+}
+
+/* =====================================================================
+   LESSON 1 — WALKING
+   ===================================================================== */
+const L0={unit:29,cx:380,base:120,min:-12,max:12,busy:false,op:'+'};
+function l0Draw(walkerV,arcs){
+  const b=L0.base;
+  let g=drawLine(null,b,L0.min,L0.max,L0.unit,L0.cx);
+  (arcs||[]).forEach(a=>{
+    const x0=L0.cx+a[0]*L0.unit,x1=L0.cx+a[1]*L0.unit,mid=(x0+x1)/2;
+    g+=`<path d="M ${x0} ${b-4} Q ${mid} ${b-38} ${x1} ${b-4}" fill="none" stroke="var(--chalk-blue)" stroke-width="2" stroke-dasharray="4 4" opacity=".8"/>`;
+  });
+  g+=`<text id="l0-walker" x="${L0.cx+walkerV*L0.unit}" y="${b-12}" font-size="28" text-anchor="middle">🐇</text>`;
+  $('l0-svg').innerHTML=g;
+}
+async function l0Go(){
+  if(L0.busy)return;
+  const a=Math.round(Number($('l0-a').value)||0), bRaw=Math.round(Number($('l0-b').value)||0);
+  const op=L0.op, res=op==='+'?a+bRaw:a-bRaw;
+  const r=$('l0-result'), e=$('l0-explain');
+  r.className='result'; 
+  if(Math.abs(a)>12||Math.abs(res)>12){r.innerHTML=`<span class="msg-bad">${s('tooBig')}</span>`;return;}
+  L0.busy=true;$('l0-go').disabled=true;
+  const key=op==='+'?(bRaw>=0?'l0e_addPos':'l0e_addNeg'):(bRaw>=0?'l0e_subPos':'l0e_subNeg');
+  e.textContent=S[key][LANG](a,bRaw);
+  r.textContent='';
+  const dir=(op==='+'?1:-1)*Math.sign(bRaw||1);
+  const steps=Math.abs(bRaw);
+  let pos=a; const arcs=[];
+  l0Draw(pos,arcs);
+  await sleep(700);
+  const w=()=>document.getElementById('l0-walker');
+  for(let i=0;i<steps;i++){
+    const from=pos, to=pos+dir;
+    await tween(340,p=>{
+      const x=L0.cx+(from+(to-from)*p)*L0.unit;
+      const y=L0.base-12-26*Math.sin(Math.PI*p);
+      const el=w(); el.setAttribute('x',x); el.setAttribute('y',y);
+    });
+    pos=to; arcs.push([from,to]); tick();
+    l0Draw(pos,arcs);
+  }
+  r.textContent=`${a} ${op==='+'?'+':'−'} ${bRaw<0?'('+bRaw+')':bRaw} = ${res}`;
+  r.className='result ok'; chime();
+  L0.busy=false;$('l0-go').disabled=false;
+}
+
+/* =====================================================================
+   LESSON 2 — JUMPS
+   ===================================================================== */
+const L1={unit:29,cx:380,base:135,min:-12,max:12,busy:false};
+function l1Draw(frogV,arcs){
+  const b=L1.base;
+  let g=drawLine(null,b,L1.min,L1.max,L1.unit,L1.cx);
+  (arcs||[]).forEach(a=>{
+    const x0=L1.cx+a[0]*L1.unit,x1=L1.cx+a[1]*L1.unit,mid=(x0+x1)/2;
+    const h=42+Math.min(30,Math.abs(a[1]-a[0])*4);
+    g+=`<path d="M ${x0} ${b-4} Q ${mid} ${b-h} ${x1} ${b-4}" fill="none" stroke="var(--chalk-pink)" stroke-width="2.5" stroke-dasharray="5 4"/>`;
+    g+=`<text x="${mid}" y="${b-h+8}" font-size="13" text-anchor="middle" fill="var(--chalk-pink)">${a[1]-a[0]>0?'+':''}${a[1]-a[0]}</text>`;
+  });
+  g+=`<text id="l1-frog" x="${L1.cx+frogV*L1.unit}" y="${b-12}" font-size="28" text-anchor="middle">🐸</text>`;
+  $('l1-svg').innerHTML=g;
+}
+async function l1Go(){
+  if(L1.busy)return;
+  const a=Math.round(Number($('l1-a').value)||0), b=Math.round(Number($('l1-b').value)||0);
+  const r=$('l1-result'), e=$('l1-explain');
+  r.className='result';
+  if(a===0||b===0){r.innerHTML=`<span class="msg-bad">${s('zero')}</span>`;return;}
+  if(Math.abs(a*b)>12){r.innerHTML=`<span class="msg-bad">${s('tooBig')}</span>`;return;}
+  L1.busy=true;$('l1-go').disabled=true;
+  const key=a>0?(b>0?'l1e_pp':'l1e_pn'):(b>0?'l1e_np':'l1e_nn');
+  e.textContent=S[key][LANG](a,b);
+  r.textContent='';
+  const jumpSize=(a>0?1:-1)*b;   // negative count flips direction
+  const jumps=Math.abs(a);
+  let pos=0; const arcs=[];
+  l1Draw(pos,arcs);
+  await sleep(900);
+  const f=()=>document.getElementById('l1-frog');
+  for(let i=0;i<jumps;i++){
+    const from=pos, to=pos+jumpSize;
+    await tween(520,p=>{
+      const x=L1.cx+(from+(to-from)*p)*L1.unit;
+      const y=L1.base-12-46*Math.sin(Math.PI*p);
+      const el=f(); el.setAttribute('x',x); el.setAttribute('y',y);
+    });
+    pos=to; arcs.push([from,to]); tick();
+    l1Draw(pos,arcs);
+    await sleep(160);
+  }
+  r.textContent=`${a<0?'('+a+')':a} × ${b<0?'('+b+')':b} = ${a*b}`;
+  r.className='result ok'; chime();
+  L1.busy=false;$('l1-go').disabled=false;
+}
+
+/* =====================================================================
+   LESSON 3 — THE TURN  (arrow rotation about 0)
+   ===================================================================== */
+const L2={unit:27,cx:380,base:280,busy:false};
+function l2Draw(angleDeg,len,trailTo){
+  const b=L2.base, cx=L2.cx;
+  let g=drawLine(null,b,-10,10,L2.unit,cx);
+  const rad=angleDeg*Math.PI/180;
+  const r=len*L2.unit;
+  const tipX=cx+r*Math.cos(rad), tipY=b-r*Math.sin(rad);
+  if(trailTo>0){
+    const tt=Math.min(trailTo,359.5);
+    g+=`<path d="M ${cx+r} ${b} A ${r} ${r} 0 ${tt>180?1:0} 0 ${cx+r*Math.cos(tt*Math.PI/180)} ${b-r*Math.sin(tt*Math.PI/180)}"
+        fill="none" stroke="var(--chalk-blue)" stroke-width="1.5" stroke-dasharray="3 5" opacity=".6"/>`;
+  }
+  g+=`<line x1="${cx}" y1="${b}" x2="${tipX}" y2="${tipY}" stroke="var(--chalk-yellow)" stroke-width="6" stroke-linecap="round"/>`;
+  const hx=Math.cos(rad), hy=-Math.sin(rad);
+  g+=`<polygon points="${tipX+10*hx},${tipY+10*hy} ${tipX-6*hy*1.4},${tipY+6*hx*1.4} ${tipX+6*hy*1.4},${tipY-6*hx*1.4}" fill="var(--chalk-yellow)"/>`;
+  g+=`<circle cx="${cx}" cy="${b}" r="5" fill="var(--chalk-pink)"/>`;
+  $('l2-svg').innerHTML=g;
+}
+async function l2Go(){
+  if(L2.busy)return;
+  const a=Math.round(Number($('l2-a').value)||0), b=Math.round(Number($('l2-b').value)||0);
+  const r=$('l2-result'), e=$('l2-explain');
+  r.className='result';
+  if(a===0||b===0){r.innerHTML=`<span class="msg-bad">${s('zero')}</span>`;return;}
+  const m=Math.abs(a*b);
+  if(m>10){r.innerHTML=`<span class="msg-bad">${s('tooBig10')}</span>`;return;}
+  L2.busy=true;$('l2-go').disabled=true;
+  const negs=(a<0?1:0)+(b<0?1:0);
+  r.textContent='';
+  e.textContent=S.l2step0[LANG](m);
+  // grow arrow from 0 to +m
+  await tween(700,p=>l2Draw(0,m*p,0));
+  await sleep(800);
+  let angle=0;
+  if(negs===0){ e.textContent=s('l2none'); }
+  for(let t=0;t<negs;t++){
+    e.textContent = t===0 ? s('l2turn1') : s('l2turn2');
+    whoosh();
+    const start=angle;
+    await tween(1300,p=>{
+      const ease=(1-Math.cos(Math.PI*p))/2;   // smooth in-out
+      l2Draw(start+180*ease, m, start+180*ease);
+    });
+    angle=start+180;
+    await sleep(900);
+  }
+  r.textContent=`${a<0?'('+a+')':a} × ${b<0?'('+b+')':b} = ${a*b}`;
+  r.className='result ok'; chime();
+  L2.busy=false;$('l2-go').disabled=false;
+}
+
+/* =====================================================================
+   LESSON 4 — QUARTER TURN (i)   [bonus]
+   ===================================================================== */
+const L3={unit:36,cx:380,cy:165,val:3,angle:0,busy:false,iCount:0};
+function l3Label(angle){
+  const a=((angle%360)+360)%360;
+  return a===0?'3':a===90?'3i':a===180?'−3':'−3i';
+}
+function l3Draw(angleDeg){
+  const cx=L3.cx, cy=L3.cy, u=L3.unit;
+  let g='';
+  // horizontal (real) axis
+  g+=`<line x1="${cx-9*u/1.5}" y1="${cy}" x2="${cx+9*u/1.5}" y2="${cy}" stroke="var(--chalk)" stroke-width="2.5"/>`;
+  for(let v=-5;v<=5;v++){ if(v===0)continue;
+    const x=cx+v*u*0.9;
+    g+=`<line x1="${x}" y1="${cy-5}" x2="${x}" y2="${cy+5}" stroke="var(--chalk-dim)" stroke-width="1.5"/>`;
+    g+=`<text x="${x}" y="${cy+20}" font-size="12" text-anchor="middle" fill="var(--chalk-dim)">${v}</text>`;
+  }
+  // vertical (imaginary) axis — dashed: the NEW direction
+  g+=`<line x1="${cx}" y1="${cy-140}" x2="${cx}" y2="${cy+140}" stroke="var(--chalk-blue)" stroke-width="2" stroke-dasharray="6 5"/>`;
+  [[1,'i'],[2,'2i'],[3,'3i'],[-1,'−i'],[-2,'−2i'],[-3,'−3i']].forEach(([v,lb])=>{
+    const y=cy-v*u*0.95;
+    g+=`<line x1="${cx-5}" y1="${y}" x2="${cx+5}" y2="${y}" stroke="var(--chalk-blue)" stroke-width="1.5"/>`;
+    g+=`<text x="${cx+12}" y="${y+4}" font-size="12" fill="var(--chalk-blue)">${lb}</text>`;
+  });
+  // guide circle
+  const r=L3.val*u*0.9;
+  g+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1.5" stroke-dasharray="3 6"/>`;
+  // arrow
+  const rad=angleDeg*Math.PI/180;
+  const tipX=cx+r*Math.cos(rad), tipY=cy-r*Math.sin(rad);
+  g+=`<line x1="${cx}" y1="${cy}" x2="${tipX}" y2="${tipY}" stroke="var(--chalk-yellow)" stroke-width="6" stroke-linecap="round"/>`;
+  const hx=Math.cos(rad), hy=-Math.sin(rad);
+  g+=`<polygon points="${tipX+10*hx},${tipY+10*hy} ${tipX-6*hy*1.4},${tipY+6*hx*1.4} ${tipX+6*hy*1.4},${tipY-6*hx*1.4}" fill="var(--chalk-yellow)"/>`;
+  g+=`<circle cx="${cx}" cy="${cy}" r="5" fill="var(--chalk-pink)"/>`;
+  g+=`<text x="${tipX+16*hx}" y="${tipY+16*hy+4}" font-size="17" text-anchor="middle" fill="var(--chalk-yellow)">${l3Label(Math.round(angleDeg))}</text>`;
+  $('l3-svg').innerHTML=g;
+}
+async function l3Rotate(deg,isI){
+  if(L3.busy)return;
+  L3.busy=true;$('l3-i').disabled=true;$('l3-neg').disabled=true;
+  whoosh();
+  const start=L3.angle;
+  await tween(1000,p=>{
+    const ease=(1-Math.cos(Math.PI*p))/2;
+    l3Draw(start+deg*ease);
+  });
+  L3.angle=start+deg;
+  if(isI){L3.iCount++;}else{L3.iCount=0;}
+  const seq=$('l3-result');
+  seq.className='result ok';
+  seq.textContent=l3Label(Math.round(L3.angle));
+  if(isI&&L3.iCount>=2&&(((L3.angle%360)+360)%360===180)){
+    $('l3-explain').textContent=s('l3magic'); chime();
+  }else{
+    $('l3-explain').textContent='';
+    tick();
+  }
+  L3.busy=false;$('l3-i').disabled=false;$('l3-neg').disabled=false;
+}
+function l3Reset(){L3.angle=0;L3.iCount=0;l3Draw(0);$('l3-result').textContent='3';$('l3-explain').textContent='';}
+
+/* =====================================================================
+   NAV + I18N
+   ===================================================================== */
+function applyLang(){
+  document.title='Number Line Playground — ಸಂಖ್ಯಾ ರೇಖೆಯ ಮೈದಾನ';
+  $('title').textContent=s('title');
+  ['tab0','tab1','tab2','tab3'].forEach(k=>$(k).textContent=s(k));
+  $('tab3').innerHTML=s('tab3');
+  $('l0-intro').textContent=s('l0intro');
+  $('l0-go').textContent=s('go');
+  $('l0-idea').textContent=s('l0idea');
+  $('l0-tn').textContent=s('teacherNote');$('l0-tnp').textContent=s('tn0');
+  $('l1-intro').textContent=s('l1intro');
+  $('l1-go').textContent=s('jump');
+  $('l1-idea').textContent=s('l1idea');
+  $('l1-tn').textContent=s('teacherNote');$('l1-tnp').textContent=s('tn1');
+  $('l2-intro').textContent=s('l2intro');
+  $('l2-go').textContent=s('turn');
+  $('l2-idea').textContent=s('l2idea');
+  $('l2-tn').textContent=s('teacherNote');$('l2-tnp').textContent=s('tn2');
+  $('l3-intro').textContent=s('l3intro');
+  $('l3-i').textContent=s('l3xi');
+  $('l3-neg').textContent=s('l3xneg');
+  $('l3-reset').textContent=s('reset');
+  $('l3-idea').textContent=s('l3idea');
+  $('l3-tn').textContent=s('teacherNote');$('l3-tnp').textContent=s('tn3');
+}
+document.querySelectorAll('.tab').forEach(tb=>{
+  tb.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.lesson').forEach(x=>x.classList.remove('active'));
+    tb.classList.add('active');
+    $('lesson'+tb.dataset.l).classList.add('active');
+    ac();
+  };
+});
+$('lang').value=LANG;
+$('lang').onchange=e=>{LANG=e.target.value;localStorage.setItem('mp_lang',LANG);applyLang();};
+
+$('l0-plus').onclick=()=>{L0.op='+';$('l0-plus').classList.add('on');$('l0-minus').classList.remove('on');};
+$('l0-minus').onclick=()=>{L0.op='-';$('l0-minus').classList.add('on');$('l0-plus').classList.remove('on');};
+$('l0-go').onclick=()=>{ac();l0Go();};
+$('l1-go').onclick=()=>{ac();l1Go();};
+$('l2-go').onclick=()=>{ac();l2Go();};
+$('l3-i').onclick=()=>{ac();l3Rotate(90,true);};
+$('l3-neg').onclick=()=>{ac();l3Rotate(180,false);};
+$('l3-reset').onclick=l3Reset;
+
+applyLang();
+l0Draw(3,[]); l1Draw(0,[]); l2Draw(0,0,0); l3Reset();
+</script>
+</body>
+</html>
