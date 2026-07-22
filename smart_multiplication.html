@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Multiplication — ಚತುರ ಗುಣಾಕಾರ</title>
+<style>
+  :root{
+    --board:#1f4237; --board-dark:#173428;
+    --frame:#8a5a33; --frame-dark:#6e4523;
+    --chalk:#f6f3e8; --chalk-dim:#cfd8cd;
+    --chalk-yellow:#ffd95e; --chalk-pink:#ff9d9d; --chalk-blue:#9dd6ff;
+    --correct:#7fe08a; --wrong:#ff8a7a;
+    --p1000:#c9a6ff; --p100:#9dd6ff; --p10:#7fe08a; --p1:#ffd95e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--frame);
+    background-image:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.07) 0 2px, transparent 2px 90px),
+      linear-gradient(var(--frame), var(--frame-dark));
+    font-family:'Comic Sans MS','Chalkboard SE','Segoe Print','Nirmala UI','Tunga',sans-serif;
+    color:var(--chalk);
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:18px;
+  }
+  .board{
+    width:100%;max-width:900px;
+    background:var(--board);
+    background-image:radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.05), transparent 60%),
+                     radial-gradient(ellipse at 80% 80%, rgba(0,0,0,.15), transparent 60%);
+    border:14px solid var(--frame-dark);
+    border-radius:14px;
+    box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 0 60px rgba(0,0,0,.35);
+    padding:24px 28px 26px;
+  }
+  h1{text-align:center;font-size:1.6rem;color:var(--chalk-yellow);text-shadow:0 0 6px rgba(255,217,94,.35)}
+  .subtitle{text-align:center;color:var(--chalk-dim);margin-bottom:16px;font-size:.95rem}
+  .screen{display:none}
+  .screen.active{display:block;animation:fadein .3s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  label{display:block;margin:14px 0 6px;color:var(--chalk-blue)}
+  input[type=text],input[type=number],select{
+    padding:10px 13px;font:inherit;font-size:1.1rem;
+    background:rgba(255,255,255,.08);border:2px dashed var(--chalk-dim);
+    border-radius:10px;color:var(--chalk);outline:none;width:100%;
+  }
+  select option{color:#222}
+  input:focus{border-color:var(--chalk-yellow)}
+  button{
+    font:inherit;cursor:pointer;border:none;border-radius:12px;
+    padding:11px 17px;font-size:1.02rem;color:var(--board-dark);
+    background:var(--chalk-yellow);box-shadow:0 3px 0 rgba(0,0,0,.3);
+    transition:transform .08s ease;
+  }
+  button:hover{transform:translateY(-2px)}
+  button:active{transform:translateY(1px)}
+  button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn-big{width:100%;margin-top:18px}
+  .btn-quiet{background:transparent;color:var(--chalk-dim);border:2px dashed var(--chalk-dim);box-shadow:none;font-size:.9rem;padding:8px 14px}
+  .blue{background:var(--chalk-blue)} .pink{background:var(--chalk-pink)} .green{background:var(--correct)}
+
+  nav{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 6px}
+  .tab{
+    font:inherit;cursor:pointer;border:none;border-radius:12px 12px 0 0;
+    padding:9px 14px;font-size:.95rem;color:var(--chalk-dim);
+    background:rgba(255,255,255,.07);
+  }
+  .tab.active{color:var(--board-dark);background:var(--chalk-yellow);font-weight:bold}
+  .lesson{display:none;border-top:2px dashed rgba(255,255,255,.25);padding-top:14px}
+  .lesson.active{display:block;animation:fadein .3s ease}
+  .intro{color:var(--chalk-blue);font-size:1rem;margin-bottom:12px;line-height:1.5}
+  .stage{background:rgba(0,0,0,.15);border-radius:12px;padding:14px 10px;margin:8px 0;text-align:center}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:10px}
+  .controls input{width:110px;text-align:center}
+  .bigidea{
+    margin-top:14px;padding:11px 15px;border:2px dashed var(--chalk-yellow);
+    border-radius:12px;color:var(--chalk-yellow);font-size:1rem;line-height:1.5
+  }
+  details{margin-top:12px;font-size:.85rem;color:var(--chalk-dim)}
+  details summary{cursor:pointer;color:var(--chalk-blue)}
+  details p{margin:8px 0 0;line-height:1.5}
+
+  /* place value cards */
+  .pv-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+  .pv-card{
+    min-width:86px;padding:10px 12px;border-radius:12px;color:#2a2438;
+    font-size:1.5rem;font-weight:bold;text-align:center;
+    animation:pop .5s ease backwards;
+  }
+  .pv-card small{display:block;font-size:.7rem;font-weight:normal;margin-top:4px}
+  @keyframes pop{from{opacity:0;transform:translateY(-18px) scale(.7)}to{opacity:1;transform:none}}
+  .pv-sum{font-size:1.4rem;margin-top:10px;color:var(--chalk-yellow)}
+
+  svg{display:block;width:100%}
+  svg text{font-family:inherit}
+
+  /* practice */
+  .statusbar{
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+    font-size:.95rem;color:var(--chalk-dim);
+    border-bottom:2px dashed rgba(255,255,255,.2);padding-bottom:10px;margin-bottom:14px;
+  }
+  .statusbar b{color:var(--chalk-yellow)}
+  .ptitle{text-align:center;font-size:2rem;margin:10px 0;letter-spacing:2px}
+  .skeleton{text-align:center;font-size:1.35rem;color:var(--chalk-blue);margin-bottom:14px;line-height:1.7}
+  .skeleton .hl{color:var(--chalk-pink)}
+  .fields{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .fields .fld{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .fields .fld span{color:var(--chalk-blue);font-size:1rem}
+  .fields input{width:130px;font-size:1.3rem;text-align:center}
+  .fields input.right{border-color:var(--correct);border-style:solid;color:var(--correct)}
+  .fields input.wrong{border-color:var(--wrong);border-style:solid}
+  .submitrow{text-align:center;margin-top:14px}
+  .msg{text-align:center;min-height:1.8rem;margin-top:10px;font-size:1.15rem}
+  .msg.ok{color:var(--correct)} .msg.bad{color:var(--wrong)}
+  .stars{text-align:center;font-size:1.2rem;letter-spacing:4px;color:var(--chalk-yellow);min-height:1.5rem}
+  .shake{animation:shake .5s ease}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+  .homegrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  .homegrid button{padding:26px 10px;font-size:1.25rem;border-radius:14px}
+  .foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:20px}
+  .summary{text-align:center;font-size:1.3rem;line-height:2;margin:16px 0}
+  .summary .big{font-size:2.2rem;color:var(--chalk-yellow)}
+  .note{font-size:.8rem;color:var(--chalk-dim);margin-top:10px;text-align:center}
+  @media (max-width:600px){ .homegrid{grid-template-columns:1fr} .ptitle{font-size:1.5rem} .skeleton{font-size:1.05rem} }
+</style>
+</head>
+<body>
+<div class="board">
+  <h1 id="app-title"></h1>
+  <div class="subtitle" id="app-sub"></div>
+
+  <!-- ===== SETUP ===== -->
+  <div class="screen active" id="scr-setup">
+    <label for="inp-lang" id="lb-lang">Language / ಭಾಷೆ</label>
+    <select id="inp-lang">
+      <option value="en">English</option>
+      <option value="kn">ಕನ್ನಡ (Kannada)</option>
+    </select>
+    <label for="inp-name" id="lb-name"></label>
+    <input type="text" id="inp-name" autocomplete="off">
+    <button class="btn-big" id="btn-start"></button>
+  </div>
+
+  <!-- ===== HOME ===== -->
+  <div class="screen" id="scr-home">
+    <div class="subtitle" id="home-hello"></div>
+    <div class="homegrid">
+      <button class="blue" id="btn-learn"></button>
+      <button class="green" id="btn-practice"></button>
+    </div>
+    <div class="note" id="home-level"></div>
+    <div class="foot">
+      <button class="btn-quiet" id="btn-csv"></button>
+      <button class="btn-quiet" id="btn-switch"></button>
+    </div>
+  </div>
+
+  <!-- ===== LEARN ===== -->
+  <div class="screen" id="scr-learn">
+    <nav>
+      <button class="tab active" data-l="0" id="tabL0"></button>
+      <button class="tab" data-l="1" id="tabL1"></button>
+      <button class="tab" data-l="2" id="tabL2"></button>
+    </nav>
+
+    <!-- Lesson A: place value machine -->
+    <section class="lesson active" id="lessonL0">
+      <div class="intro" id="lA-intro"></div>
+      <div class="controls">
+        <input type="number" id="lA-n" value="3472" min="10" max="9999">
+        <button id="lA-go" class="pink"></button>
+      </div>
+      <div class="stage" id="lA-stage"></div>
+      <div class="bigidea" id="lA-idea"></div>
+      <details><summary id="lA-tn"></summary><p id="lA-tnp"></p></details>
+    </section>
+
+    <!-- Lesson B: the break-apart rectangle -->
+    <section class="lesson" id="lessonL1">
+      <div class="intro" id="lB-intro"></div>
+      <div class="controls">
+        <input type="number" id="lB-a" value="6" min="2" max="9">
+        <span style="font-size:1.3rem">×</span>
+        <input type="number" id="lB-b" value="34" min="11" max="99">
+        <button id="lB-go" class="pink"></button>
+      </div>
+      <div class="stage"><svg id="lB-svg" viewBox="0 0 760 240" height="240"></svg></div>
+      <div class="bigidea" id="lB-idea"></div>
+      <details><summary id="lB-tn"></summary><p id="lB-tnp"></p></details>
+    </section>
+
+    <!-- Lesson C: the rounding trick -->
+    <section class="lesson" id="lessonL2">
+      <div class="intro" id="lC-intro"></div>
+      <div class="controls">
+        <input type="number" id="lC-a" value="7" min="2" max="9">
+        <span style="font-size:1.3rem">×</span>
+        <input type="number" id="lC-b" value="98" min="11" max="99">
+        <button id="lC-go" class="pink"></button>
+      </div>
+      <div class="stage"><svg id="lC-svg" viewBox="0 0 760 240" height="240"></svg></div>
+      <div class="msg" id="lC-msg"></div>
+      <div class="bigidea" id="lC-idea"></div>
+      <details><summary id="lC-tn"></summary><p id="lC-tnp"></p></details>
+    </section>
+
+    <div class="foot"><button class="btn-quiet" id="btn-learnback"></button></div>
+  </div>
+
+  <!-- ===== PRACTICE ===== -->
+  <div class="screen" id="scr-practice">
+    <div class="statusbar">
+      <span id="st-student"></span>
+      <span><span id="st-lvword"></span> <b id="st-level"></b> &nbsp; <span id="st-qword"></span> <b id="st-qnum"></b></span>
+      <span>⭐ <b id="st-score"></b></span>
+    </div>
+    <div class="ptitle" id="p-title"></div>
+    <div class="skeleton" id="p-skeleton"></div>
+    <div class="fields" id="p-fields"></div>
+    <div class="submitrow"><button id="btn-check" class="green"></button></div>
+    <div class="msg" id="p-msg"></div>
+    <div class="stars" id="p-stars"></div>
+    <div class="foot"><button class="btn-quiet" id="btn-pback"></button></div>
+  </div>
+
+  <!-- ===== SUMMARY ===== -->
+  <div class="screen" id="scr-done">
+    <div class="summary">
+      <div id="d-title"></div>
+      <div class="big" id="d-stars"></div>
+      <div id="d-level"></div>
+    </div>
+    <div class="foot">
+      <button class="btn-quiet" id="btn-csv2"></button>
+      <button class="btn-big" id="btn-home" style="flex:1"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   TEACHER CONFIGURATION
+   ===================================================================== */
+const CONFIG = {
+  questionsPerRound : 10,
+  levelUpStreak     : 3,   // first-try successes in a row to level up
+  levelDownStreak   : 2,   // failed first-tries in a row to level down
+  maxLevel          : 5,
+  minLevel          : 1,
+  pauseMs           : 2400
+};
+
+/* =====================================================================
+   LANGUAGE PACK — plain text; teachers, please correct the Kannada!
+   ===================================================================== */
+const T = {
+  title  :{en:'✨ Smart Multiplication ✨', kn:'✨ ಚತುರ ಗುಣಾಕಾರ ✨'},
+  sub    :{en:'Place value & the break-apart trick', kn:'ಸ್ಥಾನ ಬೆಲೆ ಮತ್ತು ಒಡೆದು ಗುಣಿಸುವ ತಂತ್ರ'},
+  askName:{en:'What is your name?', kn:'ನಿನ್ನ ಹೆಸರೇನು?'},
+  start  :{en:'Start ✅', kn:'ಪ್ರಾರಂಭಿಸಿ ✅'},
+  hello  :{en:n=>`Namaste, ${n}!`, kn:n=>`ನಮಸ್ಕಾರ, ${n}!`},
+  learn  :{en:'Learn 📖', kn:'ಕಲಿಯಿರಿ 📖'},
+  practice:{en:'Practice ⭐', kn:'ಅಭ್ಯಾಸ ⭐'},
+  yourLevel:{en:l=>`Your practice level: ${l}`, kn:l=>`ನಿಮ್ಮ ಅಭ್ಯಾಸ ಹಂತ: ${l}`},
+  csv    :{en:'Download score sheet (CSV)', kn:'ಅಂಕಪಟ್ಟಿ ಡೌನ್‌ಲೋಡ್ (CSV)'},
+  switchU:{en:'Change student', kn:'ವಿದ್ಯಾರ್ಥಿ ಬದಲಿಸಿ'},
+  back   :{en:'Back 🏠', kn:'ಹಿಂದಕ್ಕೆ 🏠'},
+  check  :{en:'Check ✍', kn:'ಪರಿಶೀಲಿಸಿ ✍'},
+  level  :{en:'Level', kn:'ಹಂತ'},
+  question:{en:'Question', kn:'ಪ್ರಶ್ನೆ'},
+  typeName:{en:'Please type your name first!', kn:'ಮೊದಲು ನಿಮ್ಮ ಹೆಸರು ಬರೆಯಿರಿ!'},
+  correct:{en:'✔ Correct! Well done!', kn:'✔ ಸರಿ! ಭೇಷ್!'},
+  someWrong:{en:'✖ The red boxes need another look. Try again!',
+             kn:'✖ ಕೆಂಪು ಪೆಟ್ಟಿಗೆಗಳನ್ನು ಮತ್ತೊಮ್ಮೆ ನೋಡಿ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ!'},
+  fillAll:{en:'⚠ Please fill all the boxes.', kn:'⚠ ಎಲ್ಲಾ ಪೆಟ್ಟಿಗೆಗಳನ್ನು ತುಂಬಿರಿ.'},
+  total  :{en:'total', kn:'ಒಟ್ಟು'},
+  roundDone:{en:n=>`Round finished, ${n}!`, kn:n=>`ಸುತ್ತು ಮುಗಿಯಿತು, ${n}!`},
+  starsOf:{en:(s,m)=>`${s} / ${m} ⭐`, kn:(s,m)=>`${s} / ${m} ⭐`},
+  nowLevel:{en:l=>`Now on level ${l}`, kn:l=>`ಈಗ ಹಂತ ${l}`},
+  noRec  :{en:'No scores recorded yet.', kn:'ಇನ್ನೂ ಅಂಕಗಳಿಲ್ಲ.'},
+
+  /* place names */
+  p1000  :{en:'thousands', kn:'ಸಾವಿರ'},
+  p100   :{en:'hundreds',  kn:'ನೂರು'},
+  p10    :{en:'tens',      kn:'ಹತ್ತು'},
+  p1     :{en:'ones',      kn:'ಬಿಡಿ'},
+
+  /* Learn A */
+  lA_intro:{en:'Every digit has a HOME and a VALUE. In 3472, the 3 does not mean three — it means three THOUSANDS! Type any number and press the button to break it apart.',
+            kn:'ಪ್ರತಿ ಅಂಕಿಗೂ ಒಂದು ಮನೆ ಮತ್ತು ಒಂದು ಬೆಲೆ ಇದೆ. 3472 ರಲ್ಲಿ 3 ಎಂದರೆ ಮೂರು ಅಲ್ಲ — ಮೂರು ಸಾವಿರ! ಯಾವುದೇ ಸಂಖ್ಯೆ ಬರೆದು ಬಟನ್ ಒತ್ತಿ, ಅದನ್ನು ಒಡೆದು ನೋಡಿ.'},
+  lA_go  :{en:'Break it! 💥', kn:'ಒಡೆಯಿರಿ! 💥'},
+  lA_idea:{en:'💡 Big idea: 3472 = 3000 + 400 + 70 + 2. Every number is secretly a SUM of simple pieces. This is the key that unlocks fast multiplication!',
+           kn:'💡 ದೊಡ್ಡ ವಿಚಾರ: 3472 = 3000 + 400 + 70 + 2. ಪ್ರತಿ ಸಂಖ್ಯೆಯೂ ಸರಳ ತುಂಡುಗಳ ಮೊತ್ತ. ಇದೇ ವೇಗದ ಗುಣಾಕಾರದ ಕೀಲಿಕೈ!'},
+  lA_tn  :{en:'📖 For the teacher', kn:'📖 ಶಿಕ್ಷಕರಿಗೆ'},
+  lA_tnp :{en:'Try 305 and 350 back-to-back — the same digits, very different values. Ask “where did the zero go?” before pressing the button. Digits are cheap; PLACES give them value.',
+           kn:'Try 305 and 350 back-to-back — the same digits, very different values. Ask “where did the zero go?” before pressing the button. Digits are cheap; PLACES give them value.'},
+
+  /* Learn B */
+  lB_intro:{en:'A multiplication is a RECTANGLE: 6 × 34 is 6 rows of 34. Too wide to count? CUT it at the tens! Now it is two easy rectangles: 6 × 30 and 6 × 4.',
+            kn:'ಗುಣಾಕಾರ ಒಂದು ಆಯತ: 6 × 34 ಎಂದರೆ 34 ರ 6 ಸಾಲುಗಳು. ಎಣಿಸಲು ಅಗಲವೇ? ಹತ್ತರ ಸ್ಥಾನದಲ್ಲಿ ಕತ್ತರಿಸಿ! ಈಗ ಎರಡು ಸುಲಭ ಆಯತಗಳು: 6 × 30 ಮತ್ತು 6 × 4.'},
+  lB_go  :{en:'Cut it! ✂', kn:'ಕತ್ತರಿಸಿ! ✂'},
+  lB_idea:{en:'💡 Big idea: a × (30 + 4) = a × 30 + a × 4. Mathematicians call this the DISTRIBUTIVE LAW — you “distribute” the multiplication to each piece.',
+           kn:'💡 ದೊಡ್ಡ ವಿಚಾರ: a × (30 + 4) = a × 30 + a × 4. ಗಣಿತಜ್ಞರು ಇದನ್ನು ವಿಭಾಜಕ ನಿಯಮ ಎನ್ನುತ್ತಾರೆ — ಗುಣಾಕಾರವನ್ನು ಪ್ರತಿ ತುಂಡಿಗೂ “ಹಂಚುತ್ತೀರಿ”.'},
+  lB_tnp :{en:'Let students compute 6×30 and 6×4 mentally BEFORE pressing Cut. Then try 6×34 the long way on the board and compare — same answer, but the cut way needs no carrying. That comparison sells the method.',
+           kn:'Let students compute 6×30 and 6×4 mentally BEFORE pressing Cut. Then try 6×34 the long way on the board and compare — same answer, but the cut way needs no carrying. That comparison sells the method.'},
+
+  /* Learn C */
+  lC_intro:{en:'Numbers like 98 are LAZY — they sit just below a round number. Do not multiply 7 × 98 the hard way! Pretend it is 100, then give back the extra: 7 × 100 − 7 × 2.',
+            kn:'98 ರಂತಹ ಸಂಖ್ಯೆಗಳು ದುಂಡಗಿನ ಸಂಖ್ಯೆಯ ಸ್ವಲ್ಪ ಕೆಳಗಿವೆ. 7 × 98 ಅನ್ನು ಕಷ್ಟದ ದಾರಿಯಲ್ಲಿ ಮಾಡಬೇಡಿ! ಅದು 100 ಎಂದು ಭಾವಿಸಿ, ಹೆಚ್ಚಿನದನ್ನು ಹಿಂತಿರುಗಿಸಿ: 7 × 100 − 7 × 2.'},
+  lC_go  :{en:'Show the trick! 🎩', kn:'ತಂತ್ರ ತೋರಿಸಿ! 🎩'},
+  lC_pick:{en:'⚠ Pick a number just BELOW a round number — ending in 6, 7, 8 or 9 (like 38, 59, 98).',
+           kn:'⚠ ದುಂಡಗಿನ ಸಂಖ್ಯೆಯ ಸ್ವಲ್ಪ ಕೆಳಗಿನ ಸಂಖ್ಯೆ ಆರಿಸಿ — 6, 7, 8, 9 ರಲ್ಲಿ ಕೊನೆಗೊಳ್ಳುವ (ಉದಾ 38, 59, 98).'},
+  lC_idea:{en:'💡 Big idea: a × 98 = a × 100 − a × 2. Round UP, multiply the easy way, then SUBTRACT the small extra piece.',
+           kn:'💡 ದೊಡ್ಡ ವಿಚಾರ: a × 98 = a × 100 − a × 2. ಮೇಲಕ್ಕೆ ದುಂಡಾಗಿಸಿ, ಸುಲಭವಾಗಿ ಗುಣಿಸಿ, ನಂತರ ಸಣ್ಣ ಹೆಚ್ಚುವರಿ ತುಂಡನ್ನು ಕಳೆಯಿರಿ.'},
+  lC_tnp :{en:'Ask “which is easier: 7×98 or 7×100−14?” out loud. The dashed outline is the pretend rectangle; the red strip is what we borrowed and must give back. Try 9×99 for a dramatic finish.',
+           kn:'Ask “which is easier: 7×98 or 7×100−14?” out loud. The dashed outline is the pretend rectangle; the red strip is what we borrowed and must give back. Try 9×99 for a dramatic finish.'},
+
+  /* practice skeleton labels */
+  sk_expand:{en:n=>`Write ${n} as a sum of its place values:`,
+             kn:n=>`${n} ಅನ್ನು ಸ್ಥಾನ ಬೆಲೆಗಳ ಮೊತ್ತವಾಗಿ ಬರೆಯಿರಿ:`},
+  sk_break :{en:(a,t,o)=>`${a} × <span class="hl">(${t} + ${o})</span> = ${a} × ${t} &nbsp;+&nbsp; ${a} × ${o}`,
+             kn:(a,t,o)=>`${a} × <span class="hl">(${t} + ${o})</span> = ${a} × ${t} &nbsp;+&nbsp; ${a} × ${o}`},
+  sk_break3:{en:(a,h,t,o)=>`${a} × <span class="hl">(${h} + ${t} + ${o})</span> = ${a} × ${h} + ${a} × ${t} + ${a} × ${o}`,
+             kn:(a,h,t,o)=>`${a} × <span class="hl">(${h} + ${t} + ${o})</span> = ${a} × ${h} + ${a} × ${t} + ${a} × ${o}`},
+  sk_round :{en:(a,r,d)=>`${a} × <span class="hl">(${r} − ${d})</span> = ${a} × ${r} &nbsp;−&nbsp; ${a} × ${d}`,
+             kn:(a,r,d)=>`${a} × <span class="hl">(${r} − ${d})</span> = ${a} × ${r} &nbsp;−&nbsp; ${a} × ${d}`},
+  sk_up    :{en:(a,r,d)=>`${a} × <span class="hl">(${r} + ${d})</span> = ${a} × ${r} &nbsp;+&nbsp; ${a} × ${d}`,
+             kn:(a,r,d)=>`${a} × <span class="hl">(${r} + ${d})</span> = ${a} × ${r} &nbsp;+&nbsp; ${a} × ${d}`}
+};
+
+const SPEAK = {
+  greet  : n=>({en:`Namaste ${n}! Let us multiply the smart way!`,
+                kn:`ನಮಸ್ಕಾರ ${n}! ಚತುರ ದಾರಿಯಲ್ಲಿ ಗುಣಿಸೋಣ!`}),
+  correct: n=>({en:`${n}, this is correct! Well done!`,
+                kn:`${n}, ಇದು ಸರಿಯಾಗಿದೆ! ಭೇಷ್!`}),
+  levelUp: l=>({en:`Wonderful! You are now on level ${l}!`,
+                kn:`ಅದ್ಭುತ! ನೀವು ಈಗ ಹಂತ ${l} ನಲ್ಲಿ ಇದ್ದೀರಿ!`}),
+  done   : (n,s,m)=>({en:`${n}, you earned ${s} out of ${m} stars!`,
+                kn:`${n}, ನೀವು ${m} ರಲ್ಲಿ ${s} ನಕ್ಷತ್ರ ಗಳಿಸಿದ್ದೀರಿ!`})
+};
+
+/* =====================================================================
+   STATE + PERSISTENCE (per-student, like the practice app)
+   ===================================================================== */
+let LANG = localStorage.getItem('mp_lang') || 'en';
+let student='';
+let session=null, cur=null, pendingNext=null;
+
+const $=id=>document.getElementById(id);
+const t=k=>T[k][LANG];
+function rint(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function pick(a){return a[rint(0,a.length-1)];}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');}
+function loadJSON(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}
+function saveJSON(k,v){localStorage.setItem(k,JSON.stringify(v));}
+function getLevel(n){const p=loadJSON('sm_progress',{});return p[n]||CONFIG.minLevel;}
+function setLevel(n,l){const p=loadJSON('sm_progress',{});p[n]=l;saveJSON('sm_progress',p);}
+function addRecord(r){const a=loadJSON('sm_records',[]);a.push(r);saveJSON('sm_records',a);}
+
+function downloadCSV(){
+  const rows=loadJSON('sm_records',[]);
+  if(rows.length===0){alert(t('noRec'));return;}
+  const header=['DateTime','Student','Level','Problem','Expected','FirstTry','Attempts'];
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const csv=[header.join(',')].concat(rows.map(r=>
+    [r.time,r.student,r.level,r.problem,r.expected,r.firstTry?'Yes':'No',r.attempts].map(esc).join(','))).join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='smart_multiplication_scores.csv';a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ---- sound + TTS ---- */
+let AC=null;
+function ac(){if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC;}
+function tone(f,st,d,type,vol){const c=ac(),o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(.0001,c.currentTime+st);
+  g.gain.linearRampToValueAtTime(vol,c.currentTime+st+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+st+d);
+  o.connect(g).connect(c.destination);o.start(c.currentTime+st);o.stop(c.currentTime+st+d+.05);}
+const chime=()=>{[523,659,784,1047].forEach((f,i)=>tone(f,i*.12,.3,'triangle',.22));};
+const buzz =()=>{tone(150,0,.22,'sawtooth',.2);tone(110,.24,.3,'sawtooth',.2);};
+function findVoice(pre){const vs=speechSynthesis.getVoices();return vs.find(v=>v.lang&&v.lang.toLowerCase().startsWith(pre))||null;}
+function speak(ph){
+  if(!('speechSynthesis' in window))return;
+  speechSynthesis.cancel();
+  let text,voice;
+  if(LANG==='kn'){voice=findVoice('kn');text=voice?ph.kn:ph.en;if(!voice)voice=findVoice('en-in')||findVoice('en');}
+  else{text=ph.en;voice=findVoice('en-in')||findVoice('en');}
+  const u=new SpeechSynthesisUtterance(text);
+  if(voice)u.voice=voice;
+  u.lang=voice?voice.lang:(LANG==='kn'?'kn-IN':'en-IN');
+  u.rate=.95;speechSynthesis.speak(u);
+}
+if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=()=>{};
+
+/* =====================================================================
+   LEARN — Lesson A: place value machine
+   ===================================================================== */
+const PV_COLORS=['var(--p1000)','var(--p100)','var(--p10)','var(--p1)'];
+const PV_KEYS=['p1000','p100','p10','p1'];
+function lA_break(){
+  ac();
+  let n=Math.round(Number($('lA-n').value)||0);
+  n=Math.min(9999,Math.max(10,Math.abs(n)));
+  $('lA-n').value=n;
+  const s=String(n), L=s.length;
+  let cards='', parts=[];
+  for(let i=0;i<L;i++){
+    const d=Number(s[i]), place=Math.pow(10,L-1-i), val=d*place;
+    const ci=4-L+i;   // color/name index aligned to place
+    parts.push(val);
+    cards+=`<div class="pv-card" style="background:${PV_COLORS[ci]};animation-delay:${i*0.18}s">
+              ${d}<small>× ${place} = <b>${val}</b></small>
+              <small>${t(PV_KEYS[ci])}</small></div>`;
+    tone(700+i*150, i*0.18, .12, 'square', .1);
+  }
+  const sum=parts.filter(p=>p>0);
+  $('lA-stage').innerHTML=`<div class="pv-row">${cards}</div>
+    <div class="pv-sum">${n} = ${ (sum.length?sum:[0]).join(' + ') }</div>`;
+}
+
+/* =====================================================================
+   LEARN — Lesson B: break-apart rectangle (area model)
+   ===================================================================== */
+function lB_draw(){
+  ac();
+  let a=Math.min(9,Math.max(2,Math.round(Number($('lB-a').value)||6)));
+  let b=Math.min(99,Math.max(11,Math.round(Number($('lB-b').value)||34)));
+  if(b%10===0)b+=4;
+  $('lB-a').value=a;$('lB-b').value=b;
+  const tens=Math.floor(b/10)*10, ones=b-tens;
+  const u=6.6, v=15, x0=(760-b*u)/2, y0=30;
+  const xCut=x0+tens*u;
+  let g='';
+  g+=`<rect x="${x0}" y="${y0}" width="${tens*u}" height="${a*v}" fill="rgba(157,214,255,.35)" stroke="var(--chalk-blue)" stroke-width="2"/>`;
+  g+=`<rect x="${xCut}" y="${y0}" width="${ones*u}" height="${a*v}" fill="rgba(255,157,157,.4)" stroke="var(--chalk-pink)" stroke-width="2"/>`;
+  g+=`<line x1="${xCut}" y1="${y0-12}" x2="${xCut}" y2="${y0+a*v+12}" stroke="var(--chalk-yellow)" stroke-width="2.5" stroke-dasharray="7 5"/>`;
+  g+=`<text x="${xCut}" y="${y0-16}" font-size="16" text-anchor="middle" fill="var(--chalk-yellow)">✂</text>`;
+  g+=`<text x="${x0+tens*u/2}" y="${y0+a*v/2+5}" font-size="17" text-anchor="middle" fill="var(--chalk)">${a} × ${tens} = ${a*tens}</text>`;
+  g+=`<text x="${xCut+ones*u/2}" y="${y0+a*v/2+5}" font-size="${ones<3?11:15}" text-anchor="middle" fill="var(--chalk)">${a}×${ones}=${a*ones}</text>`;
+  g+=`<text x="${x0+b*u/2}" y="${y0+a*v+34}" font-size="15" text-anchor="middle" fill="var(--chalk-dim)">${b} (${tens} + ${ones})</text>`;
+  g+=`<text x="${x0-14}" y="${y0+a*v/2+5}" font-size="15" text-anchor="end" fill="var(--chalk-dim)">${a}</text>`;
+  g+=`<text x="380" y="${y0+a*v+64}" font-size="19" text-anchor="middle" fill="var(--chalk-yellow)">${a} × ${b} = ${a*tens} + ${a*ones} = ${a*b}</text>`;
+  $('lB-svg').innerHTML=g;
+  chime();
+}
+
+/* =====================================================================
+   LEARN — Lesson C: the rounding trick
+   ===================================================================== */
+function lC_draw(){
+  ac();
+  let a=Math.min(9,Math.max(2,Math.round(Number($('lC-a').value)||7)));
+  let b=Math.min(99,Math.max(11,Math.round(Number($('lC-b').value)||98)));
+  $('lC-a').value=a;$('lC-b').value=b;
+  const ones=b%10;
+  if(ones<6){ $('lC-msg').innerHTML=`<span style="color:var(--wrong)">${t('lC_pick')}</span>`; return; }
+  $('lC-msg').textContent='';
+  const R=Math.ceil(b/10)*10, d=R-b;
+  const u=6.6, v=15, x0=(760-R*u)/2, y0=30;
+  const xCut=x0+b*u;
+  let g='';
+  /* pretend rectangle (a × R) — dashed outline */
+  g+=`<rect x="${x0}" y="${y0}" width="${R*u}" height="${a*v}" fill="none" stroke="var(--chalk-yellow)" stroke-width="2.5" stroke-dasharray="8 6"/>`;
+  /* real rectangle (a × b) */
+  g+=`<rect x="${x0}" y="${y0}" width="${b*u}" height="${a*v}" fill="rgba(127,224,138,.3)" stroke="var(--correct)" stroke-width="2"/>`;
+  /* borrowed strip (a × d) */
+  g+=`<rect x="${xCut}" y="${y0}" width="${d*u}" height="${a*v}" fill="rgba(255,138,122,.45)" stroke="var(--wrong)" stroke-width="2"/>`;
+  g+=`<text x="${x0+b*u/2}" y="${y0+a*v/2+5}" font-size="17" text-anchor="middle" fill="var(--chalk)">${a} × ${b} = ?</text>`;
+  g+=`<text x="${xCut+d*u/2}" y="${y0-8}" font-size="13" text-anchor="middle" fill="var(--wrong)">− ${a}×${d}</text>`;
+  g+=`<text x="${x0+R*u/2}" y="${y0+a*v+30}" font-size="15" text-anchor="middle" fill="var(--chalk-yellow)">${a} × ${R} = ${a*R}</text>`;
+  g+=`<text x="380" y="${y0+a*v+62}" font-size="19" text-anchor="middle" fill="var(--chalk-yellow)">${a} × ${b} = ${a*R} − ${a*d} = ${a*b}</text>`;
+  $('lC-svg').innerHTML=g;
+  chime();
+}
+
+/* =====================================================================
+   PRACTICE — graded, scaffolded problems
+   Level 1: expanded form (place value)
+   Level 2: a × 2-digit break-apart
+   Level 3: a × 3-digit break-apart
+   Level 4: rounding-down trick (a × 98 style)
+   Level 5: mixed (round down, round up, 3-digit)
+   ===================================================================== */
+function genExpand(digits){
+  let n=0, parts=[];
+  for(let i=digits-1;i>=0;i--){const d=rint(1,9);n+=d*Math.pow(10,i);parts.push(d*Math.pow(10,i));}
+  const keys=PV_KEYS.slice(4-digits);
+  return {
+    title:`${n} = ?`,
+    skeleton:T.sk_expand[LANG](n),
+    fields:parts.map((p,i)=>({label:t(keys[i]),answer:p})),
+    problemText:`expand ${n}`, expected:parts.join('+')
+  };
+}
+function genBreak2(){
+  const a=rint(2,9), tn=rint(2,9)*10, o=rint(2,9), b=tn+o;
+  return {
+    title:`${a} × ${b} = ?`,
+    skeleton:T.sk_break[LANG](a,tn,o),
+    fields:[{label:`${a} × ${tn} =`,answer:a*tn},{label:`${a} × ${o} =`,answer:a*o},{label:t('total')+' =',answer:a*b}],
+    problemText:`${a} × ${b}`, expected:`${a*tn}+${a*o}=${a*b}`
+  };
+}
+function genBreak3(){
+  const a=rint(2,9), h=rint(1,9)*100, tn=rint(1,9)*10, o=rint(1,9), b=h+tn+o;
+  return {
+    title:`${a} × ${b} = ?`,
+    skeleton:T.sk_break3[LANG](a,h,tn,o),
+    fields:[{label:`${a} × ${h} =`,answer:a*h},{label:`${a} × ${tn} =`,answer:a*tn},
+            {label:`${a} × ${o} =`,answer:a*o},{label:t('total')+' =',answer:a*b}],
+    problemText:`${a} × ${b}`, expected:`${a*h}+${a*tn}+${a*o}=${a*b}`
+  };
+}
+function genRoundDown(){
+  const a=rint(3,9), d=rint(1,2);
+  const R=pick([20,30,40,50,60,70,80,90,100]), b=R-d;
+  return {
+    title:`${a} × ${b} = ?`,
+    skeleton:T.sk_round[LANG](a,R,d),
+    fields:[{label:`${a} × ${R} =`,answer:a*R},{label:`${a} × ${d} =`,answer:a*d},{label:t('total')+' =',answer:a*b}],
+    problemText:`${a} × ${b}`, expected:`${a*R}-${a*d}=${a*b}`
+  };
+}
+function genRoundUp(){
+  const a=rint(3,9), d=rint(1,2);
+  const R=pick([20,30,40,50,100]), b=R+d;
+  return {
+    title:`${a} × ${b} = ?`,
+    skeleton:T.sk_up[LANG](a,R,d),
+    fields:[{label:`${a} × ${R} =`,answer:a*R},{label:`${a} × ${d} =`,answer:a*d},{label:t('total')+' =',answer:a*b}],
+    problemText:`${a} × ${b}`, expected:`${a*R}+${a*d}=${a*b}`
+  };
+}
+function makeProblem(level){
+  switch(level){
+    case 1: return genExpand(rint(2,3));
+    case 2: return genBreak2();
+    case 3: return pick([genBreak3, genExpand.bind(null,4)])();
+    case 4: return genRoundDown();
+    default: return pick([genRoundDown, genRoundUp, genBreak3])();
+  }
+}
+
+function startPractice(){
+  session={qnum:0,score:0,upStreak:0,downStreak:0,level:getLevel(student)};
+  show('scr-practice');
+  nextQuestion();
+}
+function nextQuestion(){
+  if(session.qnum>=CONFIG.questionsPerRound){endRound();return;}
+  session.qnum++;
+  cur=makeProblem(session.level);
+  cur.firstTry=true; cur.attempts=0;
+  $('st-student').textContent=student;
+  $('st-lvword').textContent=t('level');
+  $('st-qword').textContent=t('question');
+  $('st-level').textContent=session.level;
+  $('st-qnum').textContent=session.qnum+' / '+CONFIG.questionsPerRound;
+  $('st-score').textContent=session.score;
+  $('p-title').textContent=cur.title;
+  $('p-skeleton').innerHTML=cur.skeleton;
+  const box=$('p-fields'); box.innerHTML='';
+  cur.fields.forEach((f,i)=>{
+    const d=document.createElement('div'); d.className='fld';
+    const sp=document.createElement('span'); sp.textContent=f.label;
+    const inp=document.createElement('input');
+    inp.type='number'; inp.id='pf-'+i; inp.autocomplete='off';
+    inp.addEventListener('keydown',e=>{
+      if(e.key==='Enter'){const nx=$('pf-'+(i+1)); if(nx&&!nx.disabled)nx.focus(); else $('btn-check').click();}
+    });
+    d.appendChild(sp); d.appendChild(inp); box.appendChild(d);
+  });
+  $('btn-check').disabled=false;
+  $('p-msg').textContent=''; $('p-msg').className='msg';
+  $('p-stars').textContent='⭐'.repeat(session.upStreak);
+  $('pf-0').focus();
+}
+function checkAnswer(){
+  const vals=cur.fields.map((f,i)=>$('pf-'+i).value.trim());
+  if(vals.some(v=>v==='')){$('p-msg').textContent=t('fillAll');$('p-msg').className='msg bad';return;}
+  cur.attempts++;
+  let allOk=true;
+  cur.fields.forEach((f,i)=>{
+    const inp=$('pf-'+i);
+    if(Number(vals[i])===f.answer){inp.className='right';inp.disabled=true;}
+    else{inp.className='wrong';allOk=false;}
+  });
+  if(allOk){
+    addRecord({time:new Date().toLocaleString(),student,level:session.level,
+               problem:cur.problemText,expected:cur.expected,firstTry:cur.attempts===1,attempts:cur.attempts});
+    $('p-msg').textContent=t('correct');$('p-msg').className='msg ok';
+    chime(); speak(SPEAK.correct(student));
+    $('btn-check').disabled=true;
+    if(cur.attempts===1){
+      session.score++; session.upStreak++; session.downStreak=0;
+      if(session.upStreak>=CONFIG.levelUpStreak && session.level<CONFIG.maxLevel){
+        session.level++; session.upStreak=0;
+        setLevel(student,session.level);
+        speak(SPEAK.levelUp(session.level));
+      }
+    }else{
+      session.upStreak=0; session.downStreak++;
+      if(session.downStreak>=CONFIG.levelDownStreak && session.level>CONFIG.minLevel){
+        session.level--; session.downStreak=0;
+      }
+    }
+    setLevel(student,session.level);
+    $('st-score').textContent=session.score;
+    $('p-stars').textContent='⭐'.repeat(session.upStreak);
+    pendingNext=setTimeout(nextQuestion, CONFIG.pauseMs);
+  }else{
+    cur.firstTry=false;
+    $('p-msg').textContent=t('someWrong');$('p-msg').className='msg bad';
+    buzz();
+    $('p-fields').classList.remove('shake');void $('p-fields').offsetWidth;
+    $('p-fields').classList.add('shake');
+  }
+}
+function endRound(){
+  $('d-title').textContent=T.roundDone[LANG](student);
+  $('d-stars').textContent=T.starsOf[LANG](session.score,CONFIG.questionsPerRound);
+  $('d-level').textContent=T.nowLevel[LANG](session.level);
+  chime(); speak(SPEAK.done(student,session.score,CONFIG.questionsPerRound));
+  show('scr-done');
+}
+
+/* =====================================================================
+   NAV + I18N
+   ===================================================================== */
+function applyLang(){
+  $('app-title').textContent=t('title');
+  $('app-sub').textContent=t('sub');
+  $('lb-name').textContent=t('askName');
+  $('btn-start').textContent=t('start');
+  $('btn-learn').textContent=t('learn');
+  $('btn-practice').textContent=t('practice');
+  $('btn-csv').textContent=t('csv');
+  $('btn-csv2').textContent=t('csv');
+  $('btn-switch').textContent=t('switchU');
+  $('btn-learnback').textContent=t('back');
+  $('btn-pback').textContent=t('back');
+  $('btn-home').textContent=t('back');
+  $('btn-check').textContent=t('check');
+  $('tabL0').textContent=(LANG==='kn'?'1. ಸ್ಥಾನ ಬೆಲೆ':'1. Place Value');
+  $('tabL1').textContent=(LANG==='kn'?'2. ಒಡೆದು ಗುಣಿಸಿ ✂':'2. Break-Apart ✂');
+  $('tabL2').textContent=(LANG==='kn'?'3. ದುಂಡಾಗಿಸುವ ತಂತ್ರ 🎩':'3. Rounding Trick 🎩');
+  $('lA-intro').textContent=t('lA_intro');
+  $('lA-go').textContent=t('lA_go');
+  $('lA-idea').textContent=t('lA_idea');
+  $('lA-tn').textContent=t('lA_tn');$('lA-tnp').textContent=t('lA_tnp');
+  $('lB-intro').textContent=t('lB_intro');
+  $('lB-go').textContent=t('lB_go');
+  $('lB-idea').textContent=t('lB_idea');
+  $('lB-tn').textContent=t('lA_tn');$('lB-tnp').textContent=t('lB_tnp');
+  $('lC-intro').textContent=t('lC_intro');
+  $('lC-go').textContent=t('lC_go');
+  $('lC-idea').textContent=t('lC_idea');
+  $('lC-tn').textContent=t('lA_tn');$('lC-tnp').textContent=t('lC_tnp');
+  if(student){
+    $('home-hello').textContent=T.hello[LANG](student);
+    $('home-level').textContent=T.yourLevel[LANG](getLevel(student));
+  }
+}
+document.querySelectorAll('.tab').forEach(tb=>{
+  tb.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.lesson').forEach(x=>x.classList.remove('active'));
+    tb.classList.add('active');
+    $('lessonL'+tb.dataset.l).classList.add('active');
+    ac();
+  };
+});
+$('inp-lang').value=LANG;
+$('inp-lang').onchange=e=>{LANG=e.target.value;localStorage.setItem('mp_lang',LANG);applyLang();};
+
+$('btn-start').onclick=()=>{
+  const name=$('inp-name').value.trim();
+  if(!name){alert(t('typeName'));$('inp-name').focus();return;}
+  student=name; ac();
+  $('home-hello').textContent=T.hello[LANG](student);
+  $('home-level').textContent=T.yourLevel[LANG](getLevel(student));
+  speak(SPEAK.greet(student));
+  show('scr-home');
+};
+$('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')$('btn-start').click();});
+$('btn-learn').onclick=()=>show('scr-learn');
+$('btn-practice').onclick=startPractice;
+$('btn-learnback').onclick=()=>{$('home-level').textContent=T.yourLevel[LANG](getLevel(student));show('scr-home');};
+$('btn-pback').onclick=()=>{clearTimeout(pendingNext);$('home-level').textContent=T.yourLevel[LANG](getLevel(student));show('scr-home');};
+$('btn-home').onclick=()=>{$('home-level').textContent=T.yourLevel[LANG](getLevel(student));show('scr-home');};
+$('btn-csv').onclick=downloadCSV;
+$('btn-csv2').onclick=downloadCSV;
+$('btn-switch').onclick=()=>{$('inp-name').value='';show('scr-setup');$('inp-name').focus();};
+$('btn-check').onclick=checkAnswer;
+$('lA-go').onclick=lA_break;
+$('lB-go').onclick=lB_draw;
+$('lC-go').onclick=lC_draw;
+
+applyLang();
+</script>
+</body>
+</html>
